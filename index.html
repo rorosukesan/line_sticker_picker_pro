@@ -179,8 +179,10 @@
     <button class="mode-tab active" onclick="switchMode('pickup')">ピックアップ</button>
     <button class="mode-tab" onclick="switchMode('sales')">📊 売上分析</button>
   </div>
-  <div class="header-count" id="totalCount">0件</div>
-  <a href="help.html" target="_blank" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.5);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;">❓ ヘルプ</a>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    <div class="header-count" id="totalCount">0件</div>
+    <a href="help.html" target="_blank" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.5);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">❓ ヘルプ</a>
+  </div>
 </div>
 
 <!-- ピックアップモード -->
@@ -355,6 +357,7 @@
       <button onclick="hideCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:8px;">✕</button>
     </div>
     <div class="chart-body">
+      <div id="chartSummary" style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px;padding:8px 12px;background:#f0f4f8;border-radius:8px;display:none"></div>
       <div id="chartBarWrap" class="chart-wrap"><canvas id="chartBar"></canvas></div>
       <div id="chartPieWrap" class="chart-pie-wrap" style="display:none"><canvas id="chartPie"></canvas></div>
     </div>
@@ -826,6 +829,12 @@ function getFilteredRaw(){
   });
 }
 
+function setSummary(text){
+  const el=document.getElementById('chartSummary');
+  if(text){el.textContent=text;el.style.display='block';}
+  else{el.style.display='none';}
+}
+
 function renderChart(){
   if(chartInstance){chartInstance.destroy();chartInstance=null;}
   const rows=getFilteredRaw();
@@ -833,11 +842,21 @@ function renderChart(){
   if(chartTab==='country'){
     const agg={};
     rows.forEach(r=>{ agg[r['国']]=(agg[r['国']]||0)+parseYen(r['売上']); });
-    const labels=Object.keys(agg), data=Object.values(agg);
+    const total=Object.values(agg).reduce((a,b)=>a+b,0);
+    const totalCount=rows.length;
+    const labels=Object.keys(agg).sort((a,b)=>agg[b]-agg[a]);
+    const data=labels.map(l=>agg[l]);
+    // ラベルに件数とパーセントを付加
+    const richLabels=labels.map(l=>{
+      const cnt=rows.filter(r=>r['国']===l).length;
+      const pct=total>0?Math.round(agg[l]/total*100):0;
+      return `${l}（${cnt}件・${pct}%）`;
+    });
+    setSummary(`総件数：${totalCount}件　総売上：¥${total.toLocaleString()}`);
     const colors=['#06C755','#4495C1','#e74c3c','#f39c12','#9B59B6','#1abc9c','#e67e22','#34495e'];
     chartInstance=new Chart(document.getElementById('chartPie'),{
       type:'pie',
-      data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length)}]},
+      data:{labels:richLabels,datasets:[{data,backgroundColor:colors.slice(0,labels.length)}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
     });
     return;
@@ -846,11 +865,19 @@ function renderChart(){
   if(chartTab==='category'){
     const agg={};
     rows.forEach(r=>{ agg[r['カテゴリ']]=(agg[r['カテゴリ']]||0)+parseYen(r['売上']); });
-    const labels=Object.keys(agg), data=Object.values(agg);
+    const total=Object.values(agg).reduce((a,b)=>a+b,0);
+    const labels=Object.keys(agg);
+    const richLabels=labels.map(l=>{
+      const cnt=rows.filter(r=>r['カテゴリ']===l).length;
+      const pct=total>0?Math.round(agg[l]/total*100):0;
+      return `${l}（${cnt}件・${pct}%）`;
+    });
+    const data=labels.map(l=>agg[l]);
     const bgColors=labels.map(l=>CAT_COLORS[l]||'#ccc');
+    setSummary(null);
     chartInstance=new Chart(document.getElementById('chartPie'),{
       type:'doughnut',
-      data:{labels,datasets:[{data,backgroundColor:bgColors}]},
+      data:{labels:richLabels,datasets:[{data,backgroundColor:bgColors}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
     });
     return;
@@ -867,6 +894,12 @@ function renderChart(){
       agg[k].count++;
     });
     const sorted=Object.entries(agg).sort((a,b)=>b[1][field]-a[1][field]);
+    const totalAmount=sorted.reduce((s,[,v])=>s+v.amount,0);
+    const totalCount=sorted.reduce((s,[,v])=>s+v.count,0);
+    if(chartTab==='item_amount')
+      setSummary(`総売上：¥${totalAmount.toLocaleString()}　作品数：${sorted.length}件`);
+    else
+      setSummary(`総件数：${totalCount}件　作品数：${sorted.length}件`);
     const labels=sorted.map(([k])=>k.length>15?k.slice(0,14)+'…':k);
     const data=sorted.map(([,v])=>v[field]);
     const bgColors=sorted.map(([,v])=>CAT_COLORS[v.cat]||'#ccc');
@@ -917,6 +950,12 @@ function renderChart(){
   }
 
   const field=chartTab==='amount'?'amount':'count';
+  const totalVal=Object.values(nested).reduce((s,cats)=>{
+    return s+Object.values(cats).reduce((ss,v)=>ss+v[field],0);
+  },0);
+  setSummary(chartTab==='amount'
+    ?`総売上：¥${totalVal.toLocaleString()}`
+    :`総件数：${totalVal}件`);
   const datasets=cats.map(cat=>({
     label:cat,
     data:labels.map(k=>(nested[k]&&nested[k][cat])?nested[k][cat][field]:0),
