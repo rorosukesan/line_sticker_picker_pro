@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ヘルプ | LINEスタンプピッカー Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #f0f4f8;
+    color: #1a1a2e;
+    line-height: 1.8;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: #06C755;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(6,199,85,0.3);
+  }
+  .header h1 { font-size: 18px; font-weight: 900; }
+  .header-badge {
+    background: white;
+    color: #06C755;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .back-btn {
+    margin-left: auto;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    text-decoration: none;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.35); }
+
+  /* メイン */
+  .container {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* 前提バナー */
+  .prereq-banner {
+    background: linear-gradient(135deg, #1a0a3d, #2d1b6b);
+    color: white;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    border-left: 5px solid #9B59B6;
+  }
+  .prereq-banner h2 {
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0.7;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .prereq-banner p { font-size: 14px; line-height: 1.8; }
+  .prereq-banner a {
+    color: #c8a0ff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .prereq-banner a:hover { text-decoration: underline; }
+
+  /* セクション */
+  .section {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 900;
+    color: #06C755;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f4f8;
+  }
+  .section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section p, .section li { font-size: 13px; color: #444; }
+  .section ul { padding-left: 20px; }
+  .section ul li { margin-bottom: 4px; }
+
+  /* ステップ */
+  .steps { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    background: #06C755;
+    color: white;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body { font-size: 13px; color: #444; }
+  .step-body strong { color: #1a1a2e; }
+
+  /* 注意バッジ */
+  .note-box {
+    background: #fff8e1;
+    border-left: 4px solid #f39c12;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #555;
+    margin: 10px 0;
+  }
+  .tip-box {
+    background: #e8fdf0;
+    border-left: 4px solid #06C755;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #555;
+    margin: 10px 0;
+  }
+
+  /* CSVテーブル */
+  .csv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin: 10px 0;
+  }
+  .csv-table th {
+    background: #06C755;
+    color: white;
+    padding: 7px 12px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .csv-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #444;
+  }
+  .csv-table tr:nth-child(even) td { background: #f9f9f9; }
+  .required { color: #e74c3c; font-weight: 700; font-size: 11px; }
+  .optional { color: #888; font-size: 11px; }
+
+  /* 機能バッジ */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .feature-card {
+    background: #f8f8f8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .feature-card .icon { font-size: 20px; margin-bottom: 6px; }
+  .feature-card .name { font-weight: 700; color: #333; margin-bottom: 3px; }
+  .feature-card .desc { color: #777; font-size: 11px; }
+
+  /* フッター */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: #999;
+  }
+  footer a { color: #06C755; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>🛒</span>
+  <h1>LINEスタンプピッカー Pro</h1>
+  <span class="header-badge">ヘルプ</span>
+  <a href="index.html" class="back-btn">← アプリに戻る</a>
+</div>
+
+<div class="container">
+
+  <!-- 前提 -->
+  <div class="prereq-banner">
+    <h2>⚠️ 前提となるツールについて</h2>
+    <p>
+      本アプリは <strong>「LINE売上スキャナー（高機能版）」</strong> と組み合わせて使うことを前提としています。<br>
+      売上分析モードでは、高機能版が出力するCSVファイルが必要です。<br>
+      まだお持ちでない方は、先に以下の記事をご確認ください。<br><br>
+      👉 <a href="https://note.com/rorosuke/n/n21f112634ba7" target="_blank">LINE売上スキャナー（高機能版）の記事</a>
+    </p>
+  </div>
+
+  <!-- 概要 -->
+  <div class="section">
+    <div class="section-title">📌 LINEスタンプピッカー Proとは</div>
+    <p>LINEスタンプ作家のための管理・分析ツールです。2つのモードがあります。</p>
+    <div class="feature-grid" style="margin-top:14px">
+      <div class="feature-card">
+        <div class="icon">🛒</div>
+        <div class="name">ピックアップモード</div>
+        <div class="desc">サムネールを見ながらスタンプを選び、購入ページURLをまとめてコピーできます</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <div class="name">売上分析モード</div>
+        <div class="desc">売上データを読み込んでグラフ表示・ランキング確認・ヒートマップ分析ができます</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSVファイルの説明 -->
+  <div class="section">
+    <div class="section-title">📌 使用するCSVファイル</div>
+    <p>本アプリで使用するCSVは3種類です。</p>
+
+    <h3>▶️ 売上CSV</h3>
+    <p>LINE売上スキャナー（高機能版）の「国別スキャン」または「全エリアスキャン」で出力したCSVです。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th><th>備考</th></tr>
+      <tr><td>日付</td><td>売上が発生した日</td><td><span class="required">必須</span></td></tr>
+      <tr><td>タイトル</td><td>スタンプのタイトル</td><td><span class="required">必須</span></td></tr>
+      <tr><td>売上</td><td>売上金額（￥形式）</td><td><span class="required">必須</span></td></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td><td><span class="required">必須</span></td></tr>
+      <tr><td>国</td><td>販売国</td><td><span class="optional">任意（ない場合は「全エリア」として処理）</span></td></tr>
+    </table>
+
+    <h3>▶️ マスターリストCSV</h3>
+    <p>LINE売上スキャナー（高機能版）のマスターリスト出力CSVです。サムネール表示と売上データの紐づけに使います。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>タイトル</td><td>スタンプのタイトル</td></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td></tr>
+      <tr><td>ID</td><td>スタンプID</td></tr>
+      <tr><td>プレビューURL</td><td>サムネール画像URL</td></tr>
+    </table>
+
+    <h3>▶️ ショップリストCSV</h3>
+    <p>LINEショップスキャナーで出力したCSVです。ショップURL・サムネールの取得に使います。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>タイトル</td><td>スタンプのタイトル</td></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td></tr>
+      <tr><td>種別</td><td>アニメ・ポップアップなど</td></tr>
+      <tr><td>ショップURL</td><td>LINEストアの購入ページURL</td></tr>
+      <tr><td>LINEアプリURL</td><td>LINEアプリで開くURL</td></tr>
+      <tr><td>画像URL</td><td>サムネール画像URL</td></tr>
+    </table>
+  </div>
+
+  <!-- ピックアップモード -->
+  <div class="section">
+    <div class="section-title">📌 ピックアップモードの使い方</div>
+
+    <h3>▶️ 基本の使い方</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>CSVをアップロード</strong><br>ショップリストCSVをドロップまたはクリックして選択します。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>スタンプを選択</strong><br>サムネールをクリックすると選択状態になります。もう一度クリックで解除できます。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>URLをコピー</strong><br>下部のパネルに選択したスタンプのURLが表示されます。「ショップURL」または「LINEアプリURL」を選んでコピーしてください。</div>
+      </div>
+    </div>
+
+    <h3>▶️ 機能一覧</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">🔽</div>
+        <div class="name">カテゴリフィルタ</div>
+        <div class="desc">スタンプ・絵文字・着せ替えで絞り込めます</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎲</div>
+        <div class="name">ランダム選出</div>
+        <div class="desc">10件・20件をランダムに自動選択します</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌐</div>
+        <div class="name">ショップボタン</div>
+        <div class="desc">カード内のボタンからLINEストアに直接アクセス</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📱</div>
+        <div class="name">アプリボタン</div>
+        <div class="desc">LINEアプリの購入ページに直接アクセス</div>
+      </div>
+    </div>
+
+    <div class="note-box">⚠️ ピックアップモードで読み込めるのはショップリストCSVのみです。売上CSVやマスターリストCSVを読み込もうとするとエラーになります。</div>
+  </div>
+
+  <!-- 売上分析モード -->
+  <div class="section">
+    <div class="section-title">📌 売上分析モードの使い方</div>
+
+    <h3>▶️ 基本の使い方</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>3つのCSVを読み込む</strong><br>売上CSV・マスターリストCSV・ショップリストCSVの3つをそれぞれドロップします。3つが揃うと「▶ 分析を開始」ボタンが表示されます。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>分析を開始する</strong><br>「▶ 分析を開始」を押すとサムネール一覧が表示されます。デフォルトは売上額の高い順です。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>フィルタと並び替えで絞り込む</strong><br>月・日付範囲・国・カテゴリ・並び替えを組み合わせて分析できます。</div>
+      </div>
+    </div>
+
+    <h3>▶️ フィルタの使い方</h3>
+    <ul>
+      <li><strong>月を選択</strong>：プルダウンで月を選ぶと、その月の売上データだけが対象になります</li>
+      <li><strong>日付範囲</strong>：開始日と終了日を指定すると、その期間の売上データが対象になります（月選択と排他）</li>
+      <li><strong>国フィルタ</strong>：日本・台湾・タイなど国ごとに絞り込めます</li>
+      <li><strong>カテゴリ</strong>：スタンプ・絵文字・着せ替えで絞り込めます</li>
+    </ul>
+
+    <h3>▶️ 新旧ヒートマップ</h3>
+    <p>スライダーで「新旧の境界位置」を調整できます。ショップリストCSVの並び順を新旧の基準として使用します。</p>
+    <ul style="margin-top:8px">
+      <li>🔴 <strong>赤〜オレンジ</strong>：新しい作品</li>
+      <li>🔵 <strong>青〜緑</strong>：古い作品</li>
+      <li>⬜ <strong>グレー</strong>：着せ替え（対象外）</li>
+    </ul>
+    <div class="tip-box">💡 売上額順で並べたとき、赤い（新しい）作品が上位にあれば「新作が売れている」、青い（古い）作品が上位にあれば「ロングセラーがある」と読み取れます。</div>
+
+    <h3>▶️ グラフ機能</h3>
+    <p>「📈 グラフ」ボタンを押すとグラフモーダルが開きます。現在のフィルタ条件に連動しています。</p>
+    <table class="csv-table">
+      <tr><th>タブ</th><th>内容</th></tr>
+      <tr><td>日別売上額</td><td>日/週/月/年の粒度で選択可能な積み上げ棒グラフ</td></tr>
+      <tr><td>日別件数</td><td>日/週/月/年の粒度で選択可能な積み上げ棒グラフ</td></tr>
+      <tr><td>作品別売上</td><td>作品ごとの売上額ランキング棒グラフ</td></tr>
+      <tr><td>作品別件数</td><td>作品ごとの件数ランキング棒グラフ</td></tr>
+      <tr><td>国別</td><td>国ごとの売上比率を示す円グラフ</td></tr>
+      <tr><td>カテゴリ別</td><td>スタンプ/絵文字/着せ替えの比率ドーナツグラフ</td></tr>
+    </table>
+  </div>
+
+  <!-- よくある質問 -->
+  <div class="section">
+    <div class="section-title">📌 よくある質問</div>
+
+    <h3>▶️ 着せ替えのサムネールが表示されない</h3>
+    <p>着せ替えのサムネールはショップリストCSVに含まれる画像URLを使用します。LINEショップスキャナーで着せ替えのデータを収集してからCSVを作成してください。</p>
+
+    <h3>▶️ 売上分析で「分析を開始」が出ない</h3>
+    <p>3つのCSV（売上・マスターリスト・ショップリスト）がすべて読み込まれた状態でないと表示されません。各ボックスに「✅」が表示されているか確認してください。</p>
+
+    <h3>▶️ 全エリアCSVと国別CSVは一緒に使えますか？</h3>
+    <p>現在は1つの売上CSVのみ読み込めます。全エリアCSVを読み込むと国フィルタに「全エリア」が追加されます。</p>
+
+    <h3>▶️ ローカルでも使えますか？</h3>
+    <p>HTMLファイルをダウンロードしてブラウザで開くだけで動作します。インターネット接続は不要です（グラフ機能のChart.jsはCDN経由のため接続が必要です）。</p>
+  </div>
+
+</div>
+
+<footer>
+  LINEスタンプピッカー Pro｜<a href="https://note.com/rorosuke" target="_blank">ROROSUKE LABO</a>
+</footer>
+
+</body>
+</html>
