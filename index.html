@@ -354,7 +354,8 @@
         <button class="gran-tab" onclick="switchGran('month')">月</button>
         <button class="gran-tab" onclick="switchGran('year')">年</button>
       </div>
-      <button onclick="hideCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:8px;">✕</button>
+      <button onclick="saveChartImage()" style="background:#4495C1;color:white;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">💾 画像保存</button>
+      <button onclick="hideCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:4px;">✕</button>
     </div>
     <div class="chart-body">
       <div id="chartSummary" style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px;padding:8px 12px;background:#f0f4f8;border-radius:8px;display:none"></div>
@@ -771,6 +772,16 @@ function salesHeatColor(ratio){
 let chartTab='amount', chartGran='day', chartInstance=null;
 const CAT_COLORS={'スタンプ':'#82d882','絵文字':'#06C755','着せ替え':'#1a6e3c'};
 
+function saveChartImage(){
+  const isPie=(chartTab==='country'||chartTab==='category');
+  const canvas=document.getElementById(isPie?'chartPie':'chartBar');
+  const a=document.createElement('a');
+  const tabNames={'amount':'日別売上額','count':'日別件数','item_amount':'作品別売上','item_count':'作品別件数','country':'国別','category':'カテゴリ別'};
+  a.download=`LINEスタンプ_${tabNames[chartTab]||chartTab}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+
 function showCharts(){
   document.getElementById('chartOverlay').classList.add('visible');
   renderChart();
@@ -874,7 +885,8 @@ function renderChart(){
     });
     const data=labels.map(l=>agg[l]);
     const bgColors=labels.map(l=>CAT_COLORS[l]||'#ccc');
-    setSummary(null);
+    const totalCount=rows.length;
+    setSummary(`総件数：${totalCount}件　総売上：¥${total.toLocaleString()}`);
     chartInstance=new Chart(document.getElementById('chartPie'),{
       type:'doughnut',
       data:{labels:richLabels,datasets:[{data,backgroundColor:bgColors}]},
