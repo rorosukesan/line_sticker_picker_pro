@@ -1010,16 +1010,39 @@ function renderChart(){
     stack:'s'
   }));
 
+  const isAmount=chartTab==='amount';
   chartInstance=new Chart(document.getElementById('chartBar'),{
     type:'bar',
     data:{labels,datasets},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{position:'top'}},
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{
+          mode:'index',
+          intersect:false,
+          callbacks:{
+            label(ctx){
+              const val=ctx.parsed.y||0;
+              if(val===0) return null;
+              return isAmount
+                ? ` ${ctx.dataset.label}：¥${val.toLocaleString()}`
+                : ` ${ctx.dataset.label}：${val}件`;
+            },
+            afterBody(items){
+              if(!items.length) return [];
+              const total=items.reduce((s,i)=>s+(i.parsed.y||0),0);
+              return [isAmount
+                ? `────────\n 合計：¥${total.toLocaleString()}`
+                : `────────\n 合計：${total}件`];
+            }
+          }
+        }
+      },
       scales:{
         x:{stacked:true, ticks:{maxRotation:45,font:{size:10}}},
         y:{stacked:true, beginAtZero:true,
-          title:{display:true, text:chartTab==='amount'?'売上（円）':'件数'}}
+          title:{display:true, text:isAmount?'売上（円）':'件数'}}
       }
     }
   });
