@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINEスタンプピッカー Pro v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+
+  .header {
+    background: #06C755; color: white; padding: 12px 20px;
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(6,199,85,0.3);
+  }
+  .header h1 { font-size: 18px; font-weight: 900; }
+  .mode-tabs { display: flex; gap: 4px; margin-left: 8px; }
+  .mode-tab {
+    padding: 5px 12px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.5);
+    background: transparent; color: white; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s;
+  }
+  .mode-tab.active { background: white; color: #06C755; border-color: white; }
+  .header-count { background: white; color: #06C755; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 20px; margin-left: auto; }
+
+  .btn {
+    padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s;
+  }
+  .btn-green { background: #06C755; color: white; } .btn-green:hover { background: #05a847; }
+  .btn-blue  { background: #4495C1; color: white; } .btn-blue:hover  { background: #357aa3; }
+  .btn-gray  { background: #e0e0e0; color: #333;  } .btn-gray:hover  { background: #ccc; }
+  .btn-red   { background: #e74c3c; color: white; } .btn-red:hover   { background: #c0392b; }
+  .btn-purple{ background: #9B59B6; color: white; } .btn-purple:hover{ background: #7d3c98; }
+  .filter-select {
+    padding: 7px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 13px; font-family: 'Noto Sans JP', sans-serif; background: white;
+  }
+  .date-input {
+    padding: 6px 10px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 13px; font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* アップロード */
+  .upload-area {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 70vh; padding: 40px 20px;
+  }
+  .upload-box {
+    border: 3px dashed #06C755; border-radius: 16px; padding: 60px 40px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    background: white; max-width: 420px; width: 100%;
+  }
+  .upload-box:hover { background: #f0fff4; transform: scale(1.02); }
+  .upload-icon { font-size: 56px; margin-bottom: 16px; }
+  .upload-box h2 { font-size: 20px; font-weight: 700; color: #06C755; margin-bottom: 10px; }
+  .upload-box p  { font-size: 14px; color: #666; line-height: 1.8; }
+  input[type=file] { display: none; }
+  body.drag-over .upload-box { background: #f0fff4; border-color: #05a847; }
+
+  /* ピックアップ */
+  .controls {
+    padding: 12px 16px; background: white; border-bottom: 1px solid #e0e0e0;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .selected-info { margin-left: auto; font-size: 13px; color: #555; font-weight: 700; }
+  .selected-info span { color: #06C755; font-size: 16px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px; padding: 16px;
+  }
+  .sticker-card {
+    background: white; border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: all 0.15s; border: 3px solid transparent; position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .sticker-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+  .sticker-card.selected { border-color: #06C755; box-shadow: 0 0 0 2px rgba(6,199,85,0.3); }
+  .sticker-card.selected::after {
+    content: '✓'; position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px; background: #06C755; color: white;
+    border-radius: 50%; font-size: 14px; font-weight: 900; line-height: 24px; text-align: center;
+  }
+  .sticker-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #f5f5f5; }
+  .sticker-info { padding: 8px; }
+  .card-buttons { display: flex; gap: 4px; padding: 0 8px 8px; }
+  .card-btn {
+    flex: 1; padding: 4px 0; font-size: 9px; font-weight: 700;
+    border: none; border-radius: 4px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .card-btn-shop { background: #e8f4fd; color: #2980b9; } .card-btn-shop:hover { background: #2980b9; color: white; }
+  .card-btn-app  { background: #e8fdf0; color: #06C755; } .card-btn-app:hover  { background: #06C755; color: white; }
+  .sticker-title {
+    font-size: 10px; color: #333; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .sticker-cat { font-size: 9px; color: #999; margin-top: 3px; }
+  .kind-badge { display: inline-block; font-size: 8px; background: #fff3cd; color: #856404; border-radius: 4px; padding: 1px 4px; margin-top: 2px; }
+
+  .output-panel {
+    position: fixed; bottom: 0; left: 0; right: 0; background: white;
+    border-top: 2px solid #06C755; padding: 12px 16px; z-index: 200;
+    display: none; box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  }
+  .output-panel.visible { display: block; }
+  .output-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .output-header h3 { font-size: 14px; font-weight: 700; flex: 1; }
+  .output-textarea { width: 100%; height: 80px; border: 1px solid #ddd; border-radius: 8px; padding: 8px; font-size: 11px; resize: none; font-family: monospace; background: #f9f9f9; }
+  .copy-success { color: #06C755; font-size: 12px; font-weight: 700; display: none; }
+  .empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
+  .bottom-spacer { height: 160px; }
+
+  /* 売上分析 */
+  .sales-upload-area {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 70vh; padding: 40px 20px; gap: 20px;
+  }
+  .sales-upload-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px; }
+  .sales-upload-box {
+    flex: 1; min-width: 180px; max-width: 240px;
+    border: 3px dashed #ddd; border-radius: 16px; padding: 28px 20px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: white;
+  }
+  .sales-upload-box.loaded { border-color: #06C755; background: #f0fff4; }
+  .sales-upload-box:hover { transform: scale(1.02); }
+  .sales-upload-box .s-icon { font-size: 36px; margin-bottom: 10px; }
+  .sales-upload-box h3 { font-size: 14px; font-weight: 700; color: #555; margin-bottom: 6px; }
+  .sales-upload-box h3.done { color: #06C755; }
+  .sales-upload-box p { font-size: 11px; color: #999; line-height: 1.6; }
+
+  .sales-controls {
+    padding: 10px 16px; background: white; border-bottom: 1px solid #e0e0e0;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .sales-info { margin-left: auto; font-size: 13px; color: #555; font-weight: 700; }
+  .sales-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; padding: 16px;
+  }
+  .sales-card {
+    background: white; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.15s; position: relative;
+  }
+  .sales-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+  .sales-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #f5f5f5; }
+  .sales-card-info { padding: 8px; }
+  .sales-title {
+    font-size: 10px; color: #333; line-height: 1.4; margin-bottom: 4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .sales-amount { font-size: 14px; font-weight: 900; color: #06C755; }
+  .sales-meta { font-size: 9px; color: #999; margin-top: 2px; }
+  .sales-check {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px; background: #06C755; color: white;
+    border-radius: 50%; font-size: 14px; font-weight: 900; line-height: 24px; text-align: center;
+    z-index: 2;
+  }
+  .sales-card.selected { border: 3px solid #06C755; box-shadow: 0 0 0 2px rgba(6,199,85,0.3); }
+  .sales-heat-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 5px; display: block;
+  }
+  .sales-card { padding-bottom: 5px; }
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(0,0,0,0.55); color: white;
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>🛒</span>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v2</span></h1>
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="switchMode('pickup')">ピックアップ</button>
+    <button class="mode-tab" onclick="switchMode('sales')">📊 売上分析</button>
+    <button class="mode-tab" onclick="switchMode('official')">🏦 公式CSV</button>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    <div class="header-count" id="totalCount">0件</div>
+    <a href="help.html" target="_blank" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.5);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">❓ ヘルプ</a>
+  </div>
+</div>
+
+<!-- ピックアップモード -->
+<div id="pickupMode">
+  <div id="uploadArea" class="upload-area">
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📂</div>
+      <h2>CSVをアップロード</h2>
+      <p>LINEショップスキャナーで出力した<br>CSVファイルをここにドロップ<br>またはクリックして選択</p>
+    </div>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+  <div id="mainArea" style="display:none">
+    <div class="controls">
+      <select class="filter-select" id="catFilter" onchange="renderGrid()">
+        <option value="">すべて</option>
+        <option value="スタンプ">スタンプ</option>
+        <option value="絵文字">絵文字</option>
+        <option value="着せ替え">着せ替え</option>
+      </select>
+      <button class="btn btn-gray" onclick="clearSelection()">選択解除</button>
+      <button class="btn btn-red" onclick="randomSelect(20)">🎲 ランダム20</button>
+      <button class="btn btn-purple" onclick="randomSelect(10)">🎲 ランダム10</button>
+      <button class="btn btn-gray" onclick="resetPicker()">🔄 リセット</button>
+      <div class="selected-info">選択中: <span id="selectedCount">0</span>件</div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="bottom-spacer"></div>
+  </div>
+  <div class="output-panel" id="outputPanel">
+    <div class="output-header">
+      <h3>📋 URL一覧 (<span id="outputCount">0</span>件)</h3>
+      <span class="copy-success" id="copySuccess">✅ コピー完了！</span>
+      <button class="btn btn-blue" onclick="copyUrls('shop')">🌐 ショップURL</button>
+      <button class="btn btn-green" onclick="copyUrls('line')">📱 LINEアプリURL</button>
+    </div>
+    <textarea class="output-textarea" id="outputText" readonly placeholder="スタンプを選択するとURLが表示されます"></textarea>
+  </div>
+</div>
+
+<!-- 売上分析モード -->
+<div id="salesMode" style="display:none">
+  <div id="salesUploadArea" class="sales-upload-area">
+    <div class="sales-upload-grid">
+      <div class="sales-upload-box" id="salesBox" onclick="document.getElementById('salesFileInput').click()">
+        <div class="s-icon">📊</div>
+        <h3 id="salesBoxTitle">売上CSV</h3>
+        <p>LINE売上スキャナー（高機能版）<br>の国別売上CSV</p>
+        <input type="file" id="salesFileInput" accept=".csv">
+      </div>
+      <div class="sales-upload-box" id="masterBox" onclick="document.getElementById('masterFileInput').click()">
+        <div class="s-icon">📋</div>
+        <h3 id="masterBoxTitle">マスターリストCSV</h3>
+        <p>LINE売上スキャナー（高機能版）<br>のマスターリストCSV</p>
+        <input type="file" id="masterFileInput" accept=".csv">
+      </div>
+      <div class="sales-upload-box" id="shopBox" onclick="document.getElementById('shopFileInput').click()">
+        <div class="s-icon">🛒</div>
+        <h3 id="shopBoxTitle">ショップリストCSV</h3>
+        <p>LINEショップスキャナー<br>のCSV</p>
+        <input type="file" id="shopFileInput" accept=".csv">
+      </div>
+    </div>
+    <button class="btn btn-green" id="salesStartBtn" style="display:none" onclick="buildSalesData()">▶ 分析を開始</button>
+  </div>
+
+  <div id="salesMainArea" style="display:none">
+    <!-- ファイル個別入替パネル -->
+    <div id="reloadPanel" style="display:none;background:#f8f9fa;border-bottom:1px solid #e0e0e0;padding:10px 16px;">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">📂 ファイルを個別に入れ替える</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="reloadSalesBox">
+          <span style="font-size:20px;">📊</span>
+          <span id="reloadSalesLabel">売上CSV</span>
+          <input type="file" id="reloadSalesInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="reloadMasterBox">
+          <span style="font-size:20px;">📋</span>
+          <span id="reloadMasterLabel">マスターリストCSV</span>
+          <input type="file" id="reloadMasterInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="reloadShopBox">
+          <span style="font-size:20px;">🛒</span>
+          <span id="reloadShopLabel">ショップリストCSV</span>
+          <input type="file" id="reloadShopInput" accept=".csv" style="display:none">
+        </label>
+        <button class="btn btn-gray" style="align-self:center;" onclick="toggleReloadPanel()">✕ 閉じる</button>
+      </div>
+    </div>
+    <div class="sales-controls">
+      <select class="filter-select" id="monthFilter" onchange="onFilterChange()">
+        <option value="">月を選択</option>
+      </select>
+      <input type="date" class="date-input" id="dateFrom" onchange="onFilterChange()">
+      <span style="font-size:12px;color:#999">〜</span>
+      <input type="date" class="date-input" id="dateTo" onchange="onFilterChange()">
+      <select class="filter-select" id="countryFilter" onchange="onFilterChange()">
+        <option value="">すべての国</option>
+      </select>
+      <select class="filter-select" id="salesCatFilter" onchange="onFilterChange()">
+        <option value="">すべて</option>
+        <option value="スタンプ">スタンプ</option>
+        <option value="絵文字">絵文字</option>
+        <option value="着せ替え">着せ替え</option>
+      </select>
+      <select class="filter-select" id="sortFilter" onchange="onFilterChange()">
+        <option value="amount">売上額順</option>
+        <option value="count">件数順</option>
+        <option value="newest">最新の売れた順</option>
+        <option value="oldest">最古の売れた順</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;flex-wrap:nowrap">
+        <span style="color:#e74c3c">新</span>
+        <input type="range" id="heatSlider" min="1" max="99" value="50"
+          style="width:80px;accent-color:#06C755" oninput="onHeatSliderChange(this.value)">
+        <span style="color:#2980b9">古</span>
+        <span id="heatSliderVal" style="font-weight:700;min-width:28px">50%</span>
+      </div>
+      <button class="btn btn-blue" onclick="showCharts()">📈 グラフ</button>
+      <button class="btn btn-gray" onclick="toggleReloadPanel()">🔁 ファイル入替</button>
+      <button class="btn btn-gray" onclick="resetSales()">🔄 リセット</button>
+      <div class="sales-info" id="salesInfo">0件</div>
+    </div>
+    <!-- サマリーバー -->
+    <div id="salesSummaryBar" style="padding:10px 16px;background:white;border-bottom:1px solid #e0e0e0;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;font-weight:700;color:#333;">
+      <span>総売上: <span id="salesSumTotal" style="color:#06C755">¥0</span></span>
+      <span>スタンプ: <span id="salesSumSticker" style="color:#4495C1">¥0</span></span>
+      <span>絵文字: <span id="salesSumEmoji" style="color:#9B59B6">¥0</span></span>
+      <span id="salesSumThemeWrap">着せ替え: <span id="salesSumTheme" style="color:#27ae60">¥0</span></span>
+    </div>
+    <div class="sales-grid" id="salesGrid"></div>
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <div class="output-panel" id="salesOutputPanel">
+    <div class="output-header">
+      <h3>📋 URL一覧 (<span id="salesOutputCount">0</span>件)</h3>
+      <span class="copy-success" id="salesCopySuccess">✅ コピー完了！</span>
+      <button class="btn btn-blue" onclick="copySalesUrls('shop')">🌐 ショップURL</button>
+      <button class="btn btn-green" onclick="copySalesUrls('line')">📱 LINEアプリURL</button>
+    </div>
+    <textarea class="output-textarea" id="salesOutputText" readonly placeholder="スタンプを選択するとURLが表示されます"></textarea>
+  </div>
+</div>
+
+<!-- 公式CSVモード -->
+<div id="officialMode" style="display:none">
+  <div id="officialUploadArea" class="sales-upload-area">
+    <div class="sales-upload-grid">
+      <div class="sales-upload-box" id="offOfficialBox" onclick="document.getElementById('offOfficialInput').click()">
+        <div class="s-icon">🏦</div>
+        <h3 id="offOfficialTitle">公式CSV</h3>
+        <p>LINE Creators Marketの<br>return-XXXXXX-YYYYMM.csv</p>
+        <input type="file" id="offOfficialInput" accept=".csv">
+      </div>
+      <div class="sales-upload-box" id="offMasterBox" onclick="document.getElementById('offMasterInput').click()">
+        <div class="s-icon">📋</div>
+        <h3 id="offMasterTitle">マスターリストCSV</h3>
+        <p>LINE売上スキャナー（高機能版）<br>のマスターリストCSV</p>
+        <input type="file" id="offMasterInput" accept=".csv">
+      </div>
+      <div class="sales-upload-box" id="offShopBox" onclick="document.getElementById('offShopInput').click()">
+        <div class="s-icon">🛒</div>
+        <h3 id="offShopTitle">ショップリストCSV</h3>
+        <p>LINEショップスキャナー<br>のCSV</p>
+        <input type="file" id="offShopInput" accept=".csv">
+      </div>
+    </div>
+    <button class="btn btn-green" id="offStartBtn" style="display:none" onclick="buildOfficialData()">▶ 分析を開始</button>
+  </div>
+
+  <div id="officialMainArea" style="display:none">
+    <!-- ファイル個別入替パネル -->
+    <div id="offReloadPanel" style="display:none;background:#f8f9fa;border-bottom:1px solid #e0e0e0;padding:10px 16px;">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">📂 ファイルを個別に入れ替える</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="offReloadOfficialBox">
+          <span style="font-size:20px;">🏦</span>
+          <span id="offReloadOfficialLabel">公式CSV</span>
+          <input type="file" id="offReloadOfficialInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="offReloadMasterBox">
+          <span style="font-size:20px;">📋</span>
+          <span id="offReloadMasterLabel">マスターリストCSV</span>
+          <input type="file" id="offReloadMasterInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="offReloadShopBox">
+          <span style="font-size:20px;">🛒</span>
+          <span id="offReloadShopLabel">ショップリストCSV</span>
+          <input type="file" id="offReloadShopInput" accept=".csv" style="display:none">
+        </label>
+        <button class="btn btn-gray" style="align-self:center;" onclick="toggleOffReloadPanel()">✕ 閉じる</button>
+      </div>
+    </div>
+
+    <div class="sales-controls">
+      <select class="filter-select" id="offMonthFilter" onchange="onOffFilterChange()">
+        <option value="">すべての月</option>
+      </select>
+      <input type="date" class="date-input" id="offDateFrom" onchange="onOffFilterChange()">
+      <span style="font-size:12px;color:#999">〜</span>
+      <input type="date" class="date-input" id="offDateTo" onchange="onOffFilterChange()">
+      <select class="filter-select" id="officialCountryFilter" onchange="onOffFilterChange()">
+        <option value="">すべての国</option>
+      </select>
+      <select class="filter-select" id="officialTypeFilter" onchange="onOffFilterChange()">
+        <option value="">すべて</option>
+        <option value="Sticker">スタンプ</option>
+        <option value="Emoji">絵文字</option>
+        <option value="Theme">着せ替え</option>
+        <option value="Premium">★ Premium</option>
+      </select>
+      <select class="filter-select" id="officialSortFilter" onchange="renderOfficialGrid()">
+        <option value="revenue">分配金順</option>
+        <option value="sales">売上額順</option>
+        <option value="count">件数順</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;flex-wrap:nowrap">
+        <span style="color:#e74c3c">新</span>
+        <input type="range" id="offHeatSlider" min="1" max="99" value="50"
+          style="width:80px;accent-color:#06C755" oninput="onOffHeatSliderChange(this.value)">
+        <span style="color:#2980b9">古</span>
+        <span id="offHeatSliderVal" style="font-weight:700;min-width:28px">50%</span>
+      </div>
+      <button class="btn btn-blue" onclick="showOfficialCharts()">📈 グラフ</button>
+      <button class="btn btn-gray" onclick="toggleOffReloadPanel()">🔁 ファイル入替</button>
+      <button class="btn btn-gray" onclick="resetOfficial()">🔄 リセット</button>
+      <div class="sales-info" id="officialInfo">0件</div>
+    </div>
+
+    <!-- サマリーバー -->
+    <div style="padding:10px 16px;background:white;border-bottom:1px solid #e0e0e0;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;font-weight:700;color:#333;">
+      <span>総分配金（税前）: <span id="sumRevenuePre" style="color:#06C755">¥0</span></span>
+      <span>総分配金（税後）: <span id="sumRevenuePost" style="color:#06C755">¥0</span></span>
+      <span>スタンプ: <span id="sumSticker" style="color:#4495C1">¥0</span></span>
+      <span>絵文字: <span id="sumEmoji" style="color:#9B59B6">¥0</span></span>
+      <span id="sumPremiumWrap">Premium: <span id="sumPremium" style="color:#e67e22">¥0</span></span>
+    </div>
+
+    <div class="sales-grid" id="officialGrid"></div>
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <div class="output-panel" id="offOutputPanel">
+    <div class="output-header">
+      <h3>📋 URL一覧 (<span id="offOutputCount">0</span>件)</h3>
+      <span class="copy-success" id="offCopySuccess">✅ コピー完了！</span>
+      <button class="btn btn-blue" onclick="copyOffUrls('shop')">🌐 ショップURL</button>
+      <button class="btn btn-green" onclick="copyOffUrls('line')">📱 LINEアプリURL</button>
+    </div>
+    <textarea class="output-textarea" id="offOutputText" readonly placeholder="作品を選択するとURLが表示されます"></textarea>
+  </div>
+</div>
+
+<!-- 公式CSVグラフモーダル -->
+<div class="chart-modal-overlay" id="offChartOverlay" onclick="if(event.target===this)hideOfficialCharts()">
+  <div class="chart-modal">
+    <div class="chart-modal-header">
+      <div class="chart-modal-header-top">
+        <h2>📈 グラフ</h2>
+        <select id="offCumulativeMonthSel" style="display:none;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid #ddd;font-family:'Noto Sans JP',sans-serif;" onchange="renderOffCumulativeChart()"></select>
+        <button onclick="saveOffChartImage()" style="background:#4495C1;color:white;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;">💾 画像保存</button>
+        <button onclick="hideOfficialCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:2px;">✕</button>
+      </div>
+      <div class="chart-modal-header-bottom">
+        <div class="chart-tabs">
+          <button class="off-chart-tab chart-tab active" onclick="switchOffChartTab('item')">作品別分配金</button>
+          <button class="off-chart-tab chart-tab" onclick="switchOffChartTab('item_count')">作品別件数</button>
+          <button class="off-chart-tab chart-tab" onclick="switchOffChartTab('country')">国別</button>
+          <button class="off-chart-tab chart-tab" onclick="switchOffChartTab('type')">カテゴリ別</button>
+          <button class="off-chart-tab chart-tab" onclick="switchOffChartTab('premium')">★ Premium</button>
+          <button class="off-chart-tab chart-tab" onclick="switchOffChartTab('cumulative')">年次累積</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <div id="offChartSummary" style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px;padding:8px 12px;background:#f0f4f8;border-radius:8px;display:none"></div>
+      <div id="offChartMainWrap" style="position:relative;height:380px;"><canvas id="offChartCanvas"></canvas></div>
+      <div id="offChartCumulativeWrap" style="display:none;position:relative;height:380px;"><canvas id="offChartCumulative"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  .chart-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 500;
+    align-items: center; justify-content: center;
+  }
+  .chart-modal-overlay.visible { display: flex; }
+  .chart-modal {
+    background: white; border-radius: 16px; width: 92%; max-width: 900px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column;
+  }
+  .chart-modal-header {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 16px 8px; border-bottom: 1px solid #e0e0e0;
+    position: sticky; top: 0; background: white; z-index: 1; border-radius: 16px 16px 0 0;
+  }
+  .chart-modal-header-top {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chart-modal-header-top h2 { font-size: 15px; font-weight: 900; flex: none; margin-right: 4px; }
+  .chart-modal-header-bottom {
+    display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
+  }
+  .chart-tabs { display: flex; gap: 4px; flex-wrap: nowrap; }
+  .chart-tab {
+    padding: 4px 10px; border-radius: 20px; border: 1px solid #ddd;
+    background: white; color: #555; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .chart-tab.active { background: #06C755; color: white; border-color: #06C755; }
+  .granularity-tabs { display: flex; gap: 3px; }
+  .gran-tab {
+    padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd;
+    background: white; color: #555; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+  }
+  .gran-tab.active { background: #06C755; color: white; border-color: #06C755; }
+  .chart-body { padding: 16px 20px; }
+  .chart-wrap { position: relative; height: 360px; }
+  .chart-pie-wrap { position: relative; height: 320px; max-width: 400px; margin: 0 auto; }
+</style>
+
+<!-- グラフモーダル -->
+<div class="chart-modal-overlay" id="chartOverlay" onclick="if(event.target===this)hideCharts()">
+  <div class="chart-modal">
+    <div class="chart-modal-header">
+      <div class="chart-modal-header-top">
+        <h2>📈 グラフ</h2>
+        <div class="granularity-tabs" id="granTabs">
+          <button class="gran-tab active" onclick="switchGran('day')">日</button>
+          <button class="gran-tab" onclick="switchGran('week')">週</button>
+          <button class="gran-tab" onclick="switchGran('month')">月</button>
+          <button class="gran-tab" onclick="switchGran('year')">年</button>
+        </div>
+        <select id="cumulativeMonthSel" style="display:none;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid #ddd;font-family:'Noto Sans JP',sans-serif;" onchange="renderCumulativeChart()"></select>
+        <button onclick="saveChartImage()" style="background:#4495C1;color:white;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;">💾 画像保存</button>
+        <button onclick="hideCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:2px;">✕</button>
+      </div>
+      <div class="chart-modal-header-bottom">
+        <div class="chart-tabs">
+          <button class="sales-chart-tab chart-tab active" onclick="switchChartTab('amount')">日別売上額</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('count')">日別件数</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('item_amount')">作品別売上</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('item_count')">作品別件数</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('country')">国別</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('category')">カテゴリ別</button>
+          <button class="sales-chart-tab chart-tab" onclick="switchChartTab('cumulative')">月次累積</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <div id="chartSummary" style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px;padding:8px 12px;background:#f0f4f8;border-radius:8px;display:none"></div>
+      <div id="chartBarWrap" class="chart-wrap"><canvas id="chartBar"></canvas></div>
+      <div id="chartPieWrap" class="chart-pie-wrap" style="display:none"><canvas id="chartPie"></canvas></div>
+      <div id="chartCumulativeWrap" style="display:none;position:relative;height:380px;"><canvas id="chartCumulative"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 共通 =====
+let currentMode = 'pickup';
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0&&mode==='pickup')||(i===1&&mode==='sales')||(i===2&&mode==='official'));
+  });
+  document.getElementById('pickupMode').style.display   = mode==='pickup'   ? '' : 'none';
+  document.getElementById('salesMode').style.display    = mode==='sales'    ? '' : 'none';
+  document.getElementById('officialMode').style.display = mode==='official' ? '' : 'none';
+  document.getElementById('totalCount').textContent =
+    mode==='pickup' ? allStickers.length+'件' :
+    mode==='sales'  ? salesData.length+'件' :
+    officialData.length+'件';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
+  return lines.slice(1).map(line => {
+    const vals=[]; let cur='', inQ=false;
+    for (let c of line) {
+      if (c==='"') inQ=!inQ;
+      else if (c===','&&!inQ) { vals.push(cur); cur=''; }
+      else cur+=c;
+    }
+    vals.push(cur);
+    const obj={};
+    headers.forEach((h,i) => obj[h]=(vals[i]||'').trim());
+    return obj;
+  }).filter(r => r[headers[0]]);
+}
+
+function parseYen(s) { return parseInt((s||'').replace(/[￥,]/g,''))||0; }
+
+function getThumbnail(shopUrl, imageUrl) {
+  if (!shopUrl && !imageUrl) return '';
+  if (shopUrl && shopUrl.includes('/themeshop/')) return imageUrl||'';
+  if (shopUrl && shopUrl.includes('/emojishop/')) {
+    const m=shopUrl.match(/\/product\/([^\/]+)\//);
+    if (m) return `https://stickershop.line-scdn.net/sticonshop/v1/product/${m[1]}/iPhone/main.png`;
+  }
+  if (shopUrl && shopUrl.includes('/stickershop/')) {
+    const m=shopUrl.match(/\/product\/(\d+)\//);
+    if (m) return `https://stickershop.line-scdn.net/stickershop/v1/product/${m[1]}/LINEStorePC/main.png`;
+  }
+  return imageUrl||'';
+}
+
+function generateLineUrl(shopUrl) {
+  if (!shopUrl) return '';
+  if (shopUrl.includes('/themeshop/')) { const m=shopUrl.match(/\/product\/([0-9a-f-]+)\//); return m?`https://line.me/S/shop/theme/detail?id=${m[1]}`:''; }
+  const m=shopUrl.match(/\/product\/([0-9a-f-]+)\//); if (!m) return '';
+  if (shopUrl.includes('/emojishop/')) return `https://line.me/S/emoji/?id=${m[1]}`;
+  return `https://line.me/S/sticker/${m[1]}`;
+}
+
+function kindLabel(kind) {
+  if (!kind) return '';
+  const map={'animation-sticker-icon':'アニメ','animation-sticon-icon':'アニメ絵文字','popup-effect-sticker-icon':'エフェクト','popup-sticker-icon':'ポップアップ','message-sticker-icon':'メッセージ','name-sticker-icon':'カスタム'};
+  return `<span class="kind-badge">${map[kind]||kind.replace(/-icon$/,'')}</span>`;
+}
+
+// ===== ピックアップモード =====
+let allStickers=[], selected=new Set();
+
+function loadCSV(file) {
+  const r=new FileReader();
+  r.onload=ev=>{
+    const rows=parseCSV(ev.target.result);
+    if(!rows.length||!rows[0]['ショップURL']){
+      alert('LINEショップスキャナーが出力したCSVファイルを選択してください。\n（「ショップURL」列が見つかりませんでした）');
+      document.getElementById('fileInput').value='';
+      return;
+    }
+    allStickers=rows; selected.clear();
+    document.getElementById('uploadArea').style.display='none';
+    document.getElementById('mainArea').style.display='block';
+    document.getElementById('totalCount').textContent=allStickers.length+'件';
+    renderGrid(); updateOutput();
+  };
+  r.readAsText(file,'UTF-8');
+}
+
+document.getElementById('fileInput').addEventListener('change',e=>{ if(e.target.files[0]) loadCSV(e.target.files[0]); });
+document.addEventListener('dragover',e=>{ e.preventDefault(); document.body.classList.add('drag-over'); });
+document.addEventListener('dragleave',()=>document.body.classList.remove('drag-over'));
+document.addEventListener('drop',e=>{
+  e.preventDefault(); document.body.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.name.endsWith('.csv')&&currentMode==='pickup') loadCSV(f);
+});
+
+function renderGrid() {
+  const cat=document.getElementById('catFilter').value;
+  const filtered=cat?allStickers.filter(s=>s['カテゴリ']===cat):allStickers;
+  const grid=document.getElementById('grid');
+  if(!filtered.length){grid.innerHTML='<div class="empty-state">該当するスタンプがありません</div>';return;}
+  const heatIdx = null;
+  grid.innerHTML=filtered.map(s=>{
+    const id=allStickers.indexOf(s), shopUrl=s['ショップURL']||'';
+    const thumb=getThumbnail(shopUrl,s['画像URL']||'');
+    return `<div class="sticker-card ${selected.has(id)?'selected':''}" onclick="toggleSelect(${id})">
+      <img class="sticker-img" src="${thumb}" alt="${s['タイトル']}" loading="lazy" onerror="this.src='';this.style.background='#eee';this.style.minHeight='100px'">
+      <div class="sticker-info">
+        <div class="sticker-title">${s['タイトル']}</div>
+        <div class="sticker-cat">${s['カテゴリ']||''}${kindLabel(s['種別']||'')}</div>
+      </div>
+      <div class="card-buttons">
+        <button class="card-btn card-btn-shop" onclick="event.stopPropagation();window.open('${shopUrl}','_blank')">🌐 ショップ</button>
+        <button class="card-btn card-btn-app"  onclick="event.stopPropagation();window.open('${s['LINEアプリURL']||generateLineUrl(shopUrl)}','_blank')">📱 アプリ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function resetPicker(){
+  allStickers=[];selected.clear();
+  document.getElementById('fileInput').value='';
+  document.getElementById('mainArea').style.display='none';
+  document.getElementById('uploadArea').style.display='flex';
+  document.getElementById('totalCount').textContent='0件';
+  document.getElementById('selectedCount').textContent='0';
+  document.getElementById('outputPanel').classList.remove('visible');
+  document.getElementById('outputText').value='';
+  document.getElementById('catFilter').value='';
+}
+function toggleSelect(id){
+  if(selected.has(id))selected.delete(id);else selected.add(id);
+  document.getElementById('selectedCount').textContent=selected.size;
+  updateOutput();renderGrid();
+}
+function clearSelection(){selected.clear();document.getElementById('selectedCount').textContent=0;updateOutput();renderGrid();}
+function randomSelect(n){
+  const cat=document.getElementById('catFilter').value;
+  const pool=allStickers.map((_,i)=>i).filter(i=>!cat||allStickers[i]['カテゴリ']===cat);
+  selected.clear();pool.sort(()=>Math.random()-0.5).slice(0,n).forEach(i=>selected.add(i));
+  document.getElementById('selectedCount').textContent=selected.size;updateOutput();renderGrid();
+}
+function updateOutput(){
+  const panel=document.getElementById('outputPanel');
+  document.getElementById('outputCount').textContent=selected.size;
+  if(!selected.size){panel.classList.remove('visible');return;}
+  panel.classList.add('visible');
+  document.getElementById('outputText').value=[...selected].map(i=>allStickers[i]['ショップURL']||'').filter(Boolean).join('\n');
+}
+function copyUrls(type){
+  const urls=type==='line'
+    ?[...selected].map(i=>{const s=allStickers[i];return s['LINEアプリURL']||generateLineUrl(s['ショップURL']||'')||'';}).filter(Boolean)
+    :[...selected].map(i=>allStickers[i]['ショップURL']||'').filter(Boolean);
+  const text=urls.join('\n');
+  document.getElementById('outputText').value=text;
+  navigator.clipboard.writeText(text).then(()=>{
+    const el=document.getElementById('copySuccess');
+    el.style.display='inline';setTimeout(()=>el.style.display='none',2000);
+  });
+}
+
+// ===== 売上分析モード =====
+let rawSales=[], masterMap={}, shopMap={}, salesData=[], shopListOrder=[];
+let salesLoaded={sales:false,master:false,shop:false};
+let salesSelected=new Map(); // key→shopUrl
+
+function toggleSalesSelect(k,shopUrl,appUrl){
+  if(salesSelected.has(k)) salesSelected.delete(k);
+  else salesSelected.set(k,{shopUrl,appUrl});
+  updateSalesOutput();
+  renderSalesGrid();
+}
+
+function updateSalesOutput(){
+  const panel=document.getElementById('salesOutputPanel');
+  document.getElementById('salesOutputCount').textContent=salesSelected.size;
+  if(!salesSelected.size){panel.classList.remove('visible');return;}
+  panel.classList.add('visible');
+  document.getElementById('salesOutputText').value=[...salesSelected.values()].map(v=>v.shopUrl).filter(Boolean).join('\n');
+}
+
+function copySalesUrls(type){
+  const urls=[...salesSelected.values()].map(v=>type==='line'?v.appUrl:v.shopUrl).filter(Boolean);
+  const text=urls.join('\n');
+  document.getElementById('salesOutputText').value=text;
+  navigator.clipboard.writeText(text).then(()=>{
+    const el=document.getElementById('salesCopySuccess');
+    el.style.display='inline';setTimeout(()=>el.style.display='none',2000);
+  });
+}
+
+function sKey(title,cat){return `${title}__${cat}`;}
+
+function readSalesFile(file,type){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const rows=parseCSV(ev.target.result);
+    if(!rows.length){
+      alert('CSVファイルにデータがありません。');
+      return;
+    }
+    const cols=Object.keys(rows[0]);
+    if(type==='sales'){
+      if(!cols.includes('売上')||!cols.includes('日付')||!cols.includes('タイトル')){
+        alert('売上CSVが正しくありません。\nLINE売上スキャナー（高機能版）の売上CSVを選択してください。\n（「日付」「タイトル」「売上」列が必要です）');
+        return;
+      }
+      // 国列がない場合は「全エリア」で補完
+      if(!cols.includes('国')) rows.forEach(r=>r['国']='全エリア');
+      rawSales=rows; salesLoaded.sales=true;
+      setBox('salesBox','salesBoxTitle',`✅ 売上CSV（${rows.length}件）`);
+    } else if(type==='master'){
+      if(!cols.includes('プレビューURL')&&!cols.includes('ID')){
+        alert('マスターリストCSVが正しくありません。\nLINE売上スキャナー（高機能版）のマスターリストCSVを選択してください。');
+        return;
+      }
+      masterMap={};
+      rows.forEach(r=>{ masterMap[sKey(r['タイトル'],r['カテゴリ'])]={previewUrl:r['プレビューURL']||'',id:r['ID']||''}; });
+      salesLoaded.master=true;
+      setBox('masterBox','masterBoxTitle',`✅ マスターリスト（${rows.length}件）`);
+    } else {
+      if(!cols.includes('ショップURL')){
+        alert('ショップリストCSVが正しくありません。\nLINEショップスキャナーが出力したCSVを選択してください。\n（「ショップURL」列が必要です）');
+        return;
+      }
+      shopMap={}; shopListOrder=[];
+      rows.forEach(r=>{
+        const k=sKey(r['タイトル'],r['カテゴリ']);
+        shopMap[k]={shopUrl:r['ショップURL']||'',lineAppUrl:r['LINEアプリURL']||'',imageUrl:r['画像URL']||'',kind:r['種別']||''};
+        shopListOrder.push(k);
+      });
+      salesLoaded.shop=true;
+      setBox('shopBox','shopBoxTitle',`✅ ショップリスト（${rows.length}件）`);
+    }
+    document.getElementById('salesStartBtn').style.display=(salesLoaded.sales&&salesLoaded.master&&salesLoaded.shop)?'inline-block':'none';
+  };
+  r.readAsText(file,'UTF-8');
+}
+
+function setBox(boxId,titleId,text){
+  document.getElementById(boxId).classList.add('loaded');
+  const t=document.getElementById(titleId); t.textContent=text; t.classList.add('done');
+}
+
+document.getElementById('salesFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'sales');});
+document.getElementById('masterFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'master');});
+document.getElementById('shopFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'shop');});
+
+// 売上モードのドラッグ&ドロップ
+['salesBox','masterBox','shopBox'].forEach((boxId,i)=>{
+  const types=['sales','master','shop'];
+  const box=document.getElementById(boxId);
+  box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';});
+  box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';});
+  box.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();box.style.borderColor='';
+    const f=e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.csv')) readSalesFile(f,types[i]);
+  });
+});
+
+function buildSalesData(){
+  const agg={};
+  rawSales.forEach(r=>{
+    const k=sKey(r['タイトル'],r['カテゴリ']);
+    if(!agg[k]) agg[k]={title:r['タイトル'],category:r['カテゴリ'],total:0,count:0,dates:[]};
+    agg[k].total+=parseYen(r['売上']); agg[k].count++; agg[k].dates.push(r['日付']);
+  });
+
+  salesData=Object.values(agg).map(item=>{
+    const k=sKey(item.title,item.category);
+    const m=masterMap[k]||{}, s=shopMap[k]||{};
+    const thumb=s.imageUrl?getThumbnail(s.shopUrl,s.imageUrl):(m.previewUrl||getThumbnail(s.shopUrl,''));
+    const sortedDates=[...item.dates].map(d=>d.replace(/\//g,'-')).sort();
+    const newestDate=sortedDates[sortedDates.length-1];
+    const oldestDate=sortedDates[0];
+    return {...item, previewUrl:m.previewUrl||'', id:m.id||'', shopUrl:s.shopUrl||'', lineAppUrl:s.lineAppUrl||'', kind:s.kind||'', thumb, newestDate, oldestDate};
+  });
+
+  // 月リスト
+  const months=[...new Set(rawSales.map(r=>r['日付'].replace(/\//g,'-').slice(0,7)))].sort();
+  const mSel=document.getElementById('monthFilter');
+  mSel.innerHTML='<option value="">すべての月</option>';
+  months.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;mSel.appendChild(o);});
+
+  // 国リスト
+  const countries=[...new Set(rawSales.map(r=>r['国']))].sort();
+  const cSel=document.getElementById('countryFilter');
+  cSel.innerHTML='<option value="">すべての国</option>';
+  countries.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
+
+  document.getElementById('salesUploadArea').style.display='none';
+  document.getElementById('salesMainArea').style.display='';
+  document.getElementById('totalCount').textContent=salesData.length+'件';
+  renderSalesGrid();
+}
+
+function onFilterChange(){
+  // 月選択と日付範囲は排他
+  const month=document.getElementById('monthFilter').value;
+  if(month){document.getElementById('dateFrom').value='';document.getElementById('dateTo').value='';}
+  renderSalesGrid();
+}
+
+function renderSalesGrid(){
+  const month=document.getElementById('monthFilter').value;
+  const dateFrom=document.getElementById('dateFrom').value;
+  const dateTo=document.getElementById('dateTo').value;
+  const country=document.getElementById('countryFilter').value;
+  const cat=document.getElementById('salesCatFilter').value;
+  const sort=document.getElementById('sortFilter').value;
+
+  let filtered;
+  if(month||dateFrom||dateTo||country){
+    const agg={};
+    rawSales.forEach(r=>{
+      const d=r['日付'].replace(/\//g,'-');
+      if(month&&!d.startsWith(month))return;
+      if(dateFrom&&d<dateFrom)return;
+      if(dateTo&&d>dateTo)return;
+      if(country&&r['国']!==country)return;
+      const k=sKey(r['タイトル'],r['カテゴリ']);
+      if(!agg[k])agg[k]={total:0,count:0,dates:[]};
+      agg[k].total+=parseYen(r['売上']); agg[k].count++; agg[k].dates.push(d);
+    });
+    filtered=salesData
+      .filter(i=>agg[sKey(i.title,i.category)])
+      .map(i=>{
+        const a=agg[sKey(i.title,i.category)];
+        const sortedDates=[...a.dates].sort();
+        return{...i,total:a.total,count:a.count,newestDate:sortedDates[sortedDates.length-1],oldestDate:sortedDates[0]};
+      })
+      .filter(i=>i.total>0);
+  } else {
+    filtered=[...salesData];
+  }
+
+  if(cat) filtered=filtered.filter(i=>i.category===cat);
+  if(sort==='amount') filtered.sort((a,b)=>b.total-a.total);
+  else if(sort==='count') filtered.sort((a,b)=>b.count-a.count);
+  else if(sort==='newest') filtered.sort((a,b)=>(b.newestDate||'').localeCompare(a.newestDate||''));
+  else if(sort==='oldest') filtered.sort((a,b)=>(a.oldestDate||'').localeCompare(b.oldestDate||''));
+
+  document.getElementById('salesInfo').textContent=filtered.length+'件';
+
+  // サマリーバー更新
+  const sumTotal   = filtered.reduce((s,i)=>s+i.total,0);
+  const sumSticker = filtered.filter(i=>i.category==='スタンプ').reduce((s,i)=>s+i.total,0);
+  const sumEmoji   = filtered.filter(i=>i.category==='絵文字').reduce((s,i)=>s+i.total,0);
+  const sumTheme   = filtered.filter(i=>i.category==='着せ替え').reduce((s,i)=>s+i.total,0);
+  document.getElementById('salesSumTotal').textContent   = '¥'+sumTotal.toLocaleString();
+  document.getElementById('salesSumSticker').textContent = '¥'+sumSticker.toLocaleString();
+  document.getElementById('salesSumEmoji').textContent   = '¥'+sumEmoji.toLocaleString();
+  document.getElementById('salesSumTheme').textContent   = '¥'+sumTheme.toLocaleString();
+  document.getElementById('salesSumThemeWrap').style.display = sumTheme>0 ? '' : 'none';
+
+  const grid=document.getElementById('salesGrid');
+  if(!filtered.length){grid.innerHTML='<div class="empty-state">該当するデータがありません</div>';return;}
+
+  // ヒートマップ用インデックス構築
+  if(salesHeatmapOn&&shopListOrder.length) buildShopOrderMap();
+
+  grid.innerHTML=filtered.map((item,idx)=>{
+    const shopUrl=item.shopUrl, appUrl=item.lineAppUrl||generateLineUrl(shopUrl);
+    const k=sKey(item.title,item.category);
+    const isSel=salesSelected.has(k);
+    const shopBtn=shopUrl?`<button class="card-btn card-btn-shop" onclick="event.stopPropagation();window.open('${shopUrl}','_blank')">🌐 ショップ</button>`:'';
+    const appBtn=appUrl?`<button class="card-btn card-btn-app" onclick="event.stopPropagation();window.open('${appUrl}','_blank')">📱 アプリ</button>`:'';
+    const isTheme=item.category==='着せ替え';
+    const heatBar=salesHeatmapOn
+      ? (isTheme||shopListOrderMap[k]===undefined)
+        ? `<div class="sales-heat-bar" style="background:#ddd"></div>`
+        : `<div class="sales-heat-bar" style="background:${salesHeatColor(shopListOrderMap[k])}"></div>`
+      : '';
+    return `<div class="sales-card ${isSel?'selected':''}" onclick="toggleSalesSelect('${k}','${shopUrl}','${appUrl}')">
+      ${isSel?'<div class="sales-check">✓</div>':''}
+      <div class="sales-rank">${idx+1}</div>
+      <img src="${item.thumb}" alt="${item.title}" loading="lazy" onerror="this.src='';this.style.background='#eee';this.style.minHeight='80px'">
+      <div class="sales-card-info">
+        <div class="sales-title">${item.title}</div>
+        <div class="sales-amount">¥${item.total.toLocaleString()}</div>
+        <div class="sales-meta">${item.category}　${item.count}件${item.kind?' '+kindLabel(item.kind):''}</div>
+      </div>
+      ${(shopBtn||appBtn)?`<div class="card-buttons">${shopBtn}${appBtn}</div>`:''}
+      ${heatBar}
+    </div>`;
+  }).join('');
+}
+
+// ===== グラフ =====
+let salesHeatmapOn=true;
+let shopListOrderMap={};
+let heatThreshold=0.5;
+
+function onHeatSliderChange(val){
+  heatThreshold=val/100;
+  document.getElementById('heatSliderVal').textContent=val+'%';
+  renderSalesGrid();
+} // key: sKey → 順位(0=新しい, 1=古い)
+
+function buildShopOrderMap(){
+  // ショップリストCSVの順番（着せ替え除外）でインデックスを作成
+  // shopMapはsKey→{shopUrl,...}で格納済み
+  // allStickersは使えないのでshopMap構築時の順序を別途保持する必要がある
+  // shopListOrder配列を使う
+  shopListOrderMap={};
+  const total=shopListOrder.filter(k=>!k.includes('着せ替え')).length;
+  let rank=0;
+  shopListOrder.forEach(k=>{
+    if(k.includes('着せ替え'))return;
+    shopListOrderMap[k]=rank/(total-1||1);
+    rank++;
+  });
+}
+
+function salesHeatColor(ratio){
+  // thresholdより新しい→赤系、古い→青系、境界付近でグラデーション
+  const t=heatThreshold;
+  if(ratio<=t){
+    // 0→赤(0°) t→オレンジ(30°)
+    const r=ratio/t;
+    const hue=Math.round(r*30);
+    return `hsl(${hue},90%,50%)`;
+  } else {
+    // t→黄緑(80°) 1→青(220°)
+    const r=(ratio-t)/(1-t);
+    const hue=Math.round(80+r*140);
+    return `hsl(${hue},70%,45%)`;
+  }
+}
+let chartTab='amount', chartGran='day', chartInstance=null;
+const CAT_COLORS={'スタンプ':'#82d882','絵文字':'#06C755','着せ替え':'#1a6e3c'};
+
+// ===== 月次累積グラフ =====
+let cumulativeChartInstance = null;
+
+function buildCumulativeMonthList() {
+  const months = [...new Set(rawSales.map(r=>(r['日付']||'').slice(0,7).replace('/','-')))].filter(Boolean).sort();
+  const sel = document.getElementById('cumulativeMonthSel');
+  sel.innerHTML = '';
+  months.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m; sel.appendChild(o);
+  });
+  // 最新月を選択
+  if (months.length) sel.value = months[months.length-1];
+}
+
+function renderCumulativeChart() {
+  if (cumulativeChartInstance) { cumulativeChartInstance.destroy(); cumulativeChartInstance=null; }
+  const sel = document.getElementById('cumulativeMonthSel');
+  const month = sel.value; // "2026-04" 形式
+  if (!month) return;
+
+  // 月の日数・今日
+  const [y,m] = month.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const isCurrentMonth = month === todayStr.slice(0,7);
+  const lastDataDay = isCurrentMonth ? today.getDate() : daysInMonth;
+
+  // 月内の日別売上集計
+  const dayTotals = {};
+  rawSales.forEach(r => {
+    const d = (r['日付']||'').replace(/\//g,'-');
+    if (!d.startsWith(month)) return;
+    const day = parseInt(d.slice(8,10));
+    const amt = parseInt((r['売上']||'0').replace(/[^\d]/g,''))||0;
+    dayTotals[day] = (dayTotals[day]||0) + amt;
+  });
+
+  // 累積計算
+  const labels = Array.from({length:daysInMonth},(_,i)=>`${m}/${i+1}`);
+  const actualData = [];
+  let cumul = 0;
+  for (let d=1; d<=daysInMonth; d++) {
+    if (d <= lastDataDay) {
+      cumul += dayTotals[d]||0;
+      actualData.push(cumul);
+    } else {
+      actualData.push(null);
+    }
+  }
+
+  // 予測計算
+  const actualTotal = cumul;
+  const elapsedDays = lastDataDay;
+  const remainDays  = daysInMonth - elapsedDays;
+
+  // 今月の日次平均（楽観：今のペースが続いた場合）
+  const avgThisMonth = elapsedDays > 0 ? actualTotal / elapsedDays : 0;
+
+  // 前月の日次平均（悲観：前月ペースに戻った場合）
+  const prevMonth = m === 1 ? `${y-1}-12` : `${y}-${String(m-1).padStart(2,'0')}`;
+  const prevDaysInMonth = new Date(y, m-1, 0).getDate();
+  let prevTotal = 0;
+  rawSales.forEach(r => {
+    const d = (r['日付']||'').replace(/\//g,'-');
+    if (!d.startsWith(prevMonth)) return;
+    prevTotal += parseInt((r['売上']||'0').replace(/[^\d]/g,''))||0;
+  });
+  const avgPrevMonth = prevDaysInMonth > 0 ? prevTotal / prevDaysInMonth : 0;
+
+  // 中間：今月と前月の平均
+  const avgMid = (avgThisMonth + avgPrevMonth) / 2;
+
+  // 予測ライン（実績最終点から延長）
+  const makeForcast = avg => {
+    const line = new Array(daysInMonth).fill(null);
+    line[elapsedDays-1] = actualTotal;
+    for(let i=elapsedDays; i<daysInMonth; i++){
+      line[i] = actualTotal + avg*(i-elapsedDays+1);
+    }
+    return line;
+  };
+
+  const fOptimistic  = makeForcast(avgThisMonth);  // 楽観：今月ペース
+  const fStandard    = makeForcast(avgMid);         // 中間：今月と前月の平均
+  const fPessimistic = makeForcast(avgPrevMonth);   // 悲観：前月ペース
+
+  const predOptimistic  = Math.round(actualTotal + avgThisMonth  * remainDays);
+  const predStandard    = Math.round(actualTotal + avgMid         * remainDays);
+  const predPessimistic = Math.round(actualTotal + avgPrevMonth   * remainDays);
+
+  const summary = document.getElementById('chartSummary');
+  if (isCurrentMonth && remainDays > 0) {
+    const prevLabel = prevTotal > 0 ? `前月平均¥${Math.round(avgPrevMonth)}/日` : 'データなし';
+    summary.innerHTML = `実績：¥${actualTotal.toLocaleString()}（${elapsedDays}日経過・残${remainDays}日）<br>予測 — 悲観：¥${predPessimistic.toLocaleString()}（${prevLabel}）　想定：¥${predStandard.toLocaleString()}　楽観：¥${predOptimistic.toLocaleString()}（今月平均¥${Math.round(avgThisMonth)}/日）`;
+  } else {
+    summary.innerHTML = `確定：¥${actualTotal.toLocaleString()}（${daysInMonth}日分）`;
+  }
+  summary.style.display='block';
+
+  const datasets = [
+    {
+      label:'実績',
+      data: actualData,
+      borderColor:'#06C755', backgroundColor:'rgba(6,199,85,0.1)',
+      borderWidth:2.5, pointRadius:3, pointHoverRadius:6,
+      fill:true, tension:0.3, spanGaps:false
+    }
+  ];
+
+  if (isCurrentMonth && remainDays > 0) {
+    datasets.push(
+      {label:`悲観（前月平均 ¥${Math.round(avgPrevMonth)}/日）`,   data:fPessimistic, borderColor:'#4495C1', borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, tension:0.3},
+      {label:`想定（¥${Math.round(avgMid)}/日）`,                   data:fStandard,    borderColor:'#f39c12', borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, tension:0.3},
+      {label:`楽観（今月平均 ¥${Math.round(avgThisMonth)}/日）`,    data:fOptimistic,  borderColor:'#e74c3c', borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, tension:0.3}
+    );
+  }
+
+  cumulativeChartInstance = new Chart(
+    document.getElementById('chartCumulative'),
+    {
+      type:'line',
+      data:{labels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label(ctx){ const v=ctx.parsed.y; return v===null?null:` ${ctx.dataset.label.split('（')[0]}：¥${Math.round(v).toLocaleString()}`; }
+            }
+          }
+        },
+        scales:{
+          x:{ticks:{maxRotation:45,font:{size:9}}},
+          y:{beginAtZero:true, title:{display:true,text:'累積売上（円）'},
+             ticks:{callback:v=>`¥${v.toLocaleString()}`}}
+        }
+      }
+    }
+  );
+}
+
+function saveChartImage(){
+  const isPie=(chartTab==='country'||chartTab==='category');
+  const isCumulative=(chartTab==='cumulative');
+  const canvas=document.getElementById(isCumulative?'chartCumulative':isPie?'chartPie':'chartBar');
+  const a=document.createElement('a');
+  const tabNames={'amount':'日別売上額','count':'日別件数','item_amount':'作品別売上','item_count':'作品別件数','country':'国別','category':'カテゴリ別','cumulative':'月次累積'};
+  a.download=`LINEスタンプ_${tabNames[chartTab]||chartTab}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+
+function showCharts(){
+  document.getElementById('chartOverlay').classList.add('visible');
+  buildCumulativeMonthList();
+  renderChart();
+}
+function hideCharts(){ document.getElementById('chartOverlay').classList.remove('visible'); }
+
+function switchChartTab(tab){
+  chartTab=tab;
+  const tabs=['amount','count','item_amount','item_count','country','category','cumulative'];
+  document.querySelectorAll('.sales-chart-tab').forEach((t,i)=>{
+    t.classList.toggle('active',tabs[i]===tab);
+  });
+  const isPie=(tab==='country'||tab==='category');
+  const isItem=(tab==='item_amount'||tab==='item_count');
+  const isCumulative=(tab==='cumulative');
+  document.getElementById('chartBarWrap').style.display=(isPie||isCumulative)?'none':'';
+  document.getElementById('chartPieWrap').style.display=isPie?'':'none';
+  document.getElementById('chartCumulativeWrap').style.display=isCumulative?'':'none';
+  document.getElementById('granTabs').style.display=(isPie||isItem||isCumulative)?'none':'';
+  document.getElementById('cumulativeMonthSel').style.display=isCumulative?'':'none';
+  if(isCumulative) renderCumulativeChart();
+  else renderChart();
+}
+
+function switchGran(gran){
+  chartGran=gran;
+  document.querySelectorAll('.gran-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['day','week','month','year'][i]===gran);
+  });
+  renderChart();
+}
+
+function getGranKey(dateStr, gran){
+  const d=dateStr.replace(/\//g,'-');
+  if(gran==='day') return d;
+  if(gran==='month') return d.slice(0,7);
+  if(gran==='year') return d.slice(0,4);
+  if(gran==='week'){
+    const dt=new Date(d); const day=dt.getDay();
+    const mon=new Date(dt); mon.setDate(dt.getDate()-(day===0?6:day-1));
+    return mon.toISOString().slice(0,10);
+  }
+  return d;
+}
+
+function getFilteredRaw(){
+  const month=document.getElementById('monthFilter').value;
+  const dateFrom=document.getElementById('dateFrom').value;
+  const dateTo=document.getElementById('dateTo').value;
+  const country=document.getElementById('countryFilter').value;
+  const cat=document.getElementById('salesCatFilter').value;
+  return rawSales.filter(r=>{
+    const d=r['日付'].replace(/\//g,'-');
+    if(month&&!d.startsWith(month))return false;
+    if(dateFrom&&d<dateFrom)return false;
+    if(dateTo&&d>dateTo)return false;
+    if(country&&r['国']!==country)return false;
+    if(cat&&r['カテゴリ']!==cat)return false;
+    return true;
+  });
+}
+
+function setSummary(text){
+  const el=document.getElementById('chartSummary');
+  if(text){el.textContent=text;el.style.display='block';}
+  else{el.style.display='none';}
+}
+
+function renderChart(){
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  const rows=getFilteredRaw();
+
+  if(chartTab==='country'){
+    const agg={};
+    rows.forEach(r=>{ agg[r['国']]=(agg[r['国']]||0)+parseYen(r['売上']); });
+    const total=Object.values(agg).reduce((a,b)=>a+b,0);
+    const totalCount=rows.length;
+    const labels=Object.keys(agg).sort((a,b)=>agg[b]-agg[a]);
+    const data=labels.map(l=>agg[l]);
+    // ラベルに件数とパーセントを付加
+    const richLabels=labels.map(l=>{
+      const cnt=rows.filter(r=>r['国']===l).length;
+      const pct=total>0?Math.round(agg[l]/total*100):0;
+      return `${l}（${cnt}件・${pct}%）`;
+    });
+    setSummary(`総件数：${totalCount}件　総売上：¥${total.toLocaleString()}`);
+    const colors=['#06C755','#4495C1','#e74c3c','#f39c12','#9B59B6','#1abc9c','#e67e22','#34495e'];
+    chartInstance=new Chart(document.getElementById('chartPie'),{
+      type:'pie',
+      data:{labels:richLabels,datasets:[{data,backgroundColor:colors.slice(0,labels.length)}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+    });
+    return;
+  }
+
+  if(chartTab==='category'){
+    const agg={};
+    rows.forEach(r=>{ agg[r['カテゴリ']]=(agg[r['カテゴリ']]||0)+parseYen(r['売上']); });
+    const total=Object.values(agg).reduce((a,b)=>a+b,0);
+    const labels=Object.keys(agg);
+    const richLabels=labels.map(l=>{
+      const cnt=rows.filter(r=>r['カテゴリ']===l).length;
+      const pct=total>0?Math.round(agg[l]/total*100):0;
+      return `${l}（${cnt}件・${pct}%）`;
+    });
+    const data=labels.map(l=>agg[l]);
+    const bgColors=labels.map(l=>CAT_COLORS[l]||'#ccc');
+    const totalCount=rows.length;
+    setSummary(`総件数：${totalCount}件　総売上：¥${total.toLocaleString()}`);
+    chartInstance=new Chart(document.getElementById('chartPie'),{
+      type:'doughnut',
+      data:{labels:richLabels,datasets:[{data,backgroundColor:bgColors}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+    });
+    return;
+  }
+
+  // 作品別棒グラフ
+  if(chartTab==='item_amount'||chartTab==='item_count'){
+    const field=chartTab==='item_amount'?'amount':'count';
+    const agg={};
+    rows.forEach(r=>{
+      const k=r['タイトル'];
+      if(!agg[k])agg[k]={amount:0,count:0,cat:r['カテゴリ']};
+      agg[k].amount+=parseYen(r['売上']);
+      agg[k].count++;
+    });
+    const sorted=Object.entries(agg).sort((a,b)=>b[1][field]-a[1][field]);
+    const totalAmount=sorted.reduce((s,[,v])=>s+v.amount,0);
+    const totalCount=sorted.reduce((s,[,v])=>s+v.count,0);
+    if(chartTab==='item_amount')
+      setSummary(`総売上：¥${totalAmount.toLocaleString()}　作品数：${sorted.length}件`);
+    else
+      setSummary(`総件数：${totalCount}件　作品数：${sorted.length}件`);
+    const labels=sorted.map(([k])=>k.length>15?k.slice(0,14)+'…':k);
+    const data=sorted.map(([,v])=>v[field]);
+    const bgColors=sorted.map(([,v])=>CAT_COLORS[v.cat]||'#ccc');
+    chartInstance=new Chart(document.getElementById('chartBar'),{
+      type:'bar',
+      data:{labels,datasets:[{
+        label:chartTab==='item_amount'?'売上額（円）':'件数',
+        data, backgroundColor:bgColors
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{maxRotation:60,font:{size:9}}},
+          y:{beginAtZero:true,
+            title:{display:true,text:chartTab==='item_amount'?'売上（円）':'件数'}}
+        }
+      }
+    });
+    return;
+  }
+
+  // 棒グラフ（日別売上額・件数）
+  const cats=['スタンプ','絵文字','着せ替え'];
+  const keySet=new Set();
+  const nested={};
+  rows.forEach(r=>{
+    const k=getGranKey(r['日付'],chartGran);
+    keySet.add(k);
+    if(!nested[k])nested[k]={};
+    const cat=r['カテゴリ'];
+    if(!nested[k][cat])nested[k][cat]={amount:0,count:0};
+    nested[k][cat].amount+=parseYen(r['売上']);
+    nested[k][cat].count++;
+  });
+
+  // 日付範囲を補完して空白日を0で埋める（日粒度のみ）
+  let labels=[...keySet].sort();
+  if(chartGran==='day'&&labels.length>=2){
+    const filled=[];
+    const cur=new Date(labels[0]);
+    const end=new Date(labels[labels.length-1]);
+    while(cur<=end){
+      filled.push(cur.toISOString().slice(0,10));
+      cur.setDate(cur.getDate()+1);
+    }
+    labels=filled;
+  }
+
+  const field=chartTab==='amount'?'amount':'count';
+  const totalVal=Object.values(nested).reduce((s,cats)=>{
+    return s+Object.values(cats).reduce((ss,v)=>ss+v[field],0);
+  },0);
+  setSummary(chartTab==='amount'
+    ?`総売上：¥${totalVal.toLocaleString()}`
+    :`総件数：${totalVal}件`);
+  const datasets=cats.map(cat=>({
+    label:cat,
+    data:labels.map(k=>(nested[k]&&nested[k][cat])?nested[k][cat][field]:0),
+    backgroundColor:CAT_COLORS[cat],
+    stack:'s'
+  }));
+
+  const isAmount=chartTab==='amount';
+  chartInstance=new Chart(document.getElementById('chartBar'),{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{
+          mode:'index',
+          intersect:false,
+          callbacks:{
+            label(ctx){
+              const val=ctx.parsed.y||0;
+              if(val===0) return null;
+              return isAmount
+                ? ` ${ctx.dataset.label}：¥${val.toLocaleString()}`
+                : ` ${ctx.dataset.label}：${val}件`;
+            },
+            afterBody(items){
+              if(!items.length) return [];
+              const total=items.reduce((s,i)=>s+(i.parsed.y||0),0);
+              return [isAmount
+                ? `────────\n 合計：¥${total.toLocaleString()}`
+                : `────────\n 合計：${total}件`];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{stacked:true, ticks:{maxRotation:45,font:{size:10}}},
+        y:{stacked:true, beginAtZero:true,
+          title:{display:true, text:isAmount?'売上（円）':'件数'}}
+      }
+    }
+  });
+}
+
+function toggleReloadPanel(){
+  const p=document.getElementById('reloadPanel');
+  p.style.display=p.style.display==='none'?'':'none';
+}
+
+function reloadFile(file, type){
+  readSalesFile(file, type);
+  // ラベル更新
+  const labelMap={sales:'reloadSalesLabel',master:'reloadMasterLabel',shop:'reloadShopLabel'};
+  const boxMap={sales:'reloadSalesBox',master:'reloadMasterBox',shop:'reloadShopBox'};
+  // 読み込み成功後にrebuild（readSalesFileのonloadに任せる）
+  // ラベルはreadSalesFile側のsetBoxで更新済み → こちらはリロードパネルのラベルも更新
+  const label=document.getElementById(labelMap[type]);
+  if(label) label.textContent='✅ 読み込み完了';
+  const box=document.getElementById(boxMap[type]);
+  if(box) box.style.borderColor='#06C755';
+  // 全ファイル揃っていれば再ビルド
+  setTimeout(()=>{
+    if(salesLoaded.sales&&salesLoaded.master&&salesLoaded.shop){
+      buildSalesData();
+    }
+  }, 200);
+}
+
+document.getElementById('reloadSalesInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'sales');});
+document.getElementById('reloadMasterInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'master');});
+document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'shop');});
+
+// リロードパネルのドラッグ＆ドロップ
+[['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop']].forEach(([boxId,type])=>{
+  const box=document.getElementById(boxId);
+  box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
+  box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';box.style.background='white';});
+  box.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();
+    box.style.borderColor='';box.style.background='white';
+    const f=e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.csv')) reloadFile(f,type);
+  });
+});
+
+function resetSales(){
+  rawSales=[];masterMap={};shopMap={};salesData=[];salesSelected=new Map();shopListOrder=[];
+  salesHeatmapOn=true; heatThreshold=0.5;
+  const slider=document.getElementById('heatSlider');
+  if(slider) slider.value=50;
+  const sliderVal=document.getElementById('heatSliderVal');
+  if(sliderVal) sliderVal.textContent='50%';
+  salesLoaded={sales:false,master:false,shop:false};
+  document.getElementById('salesOutputPanel').classList.remove('visible');
+  ['salesFileInput','masterFileInput','shopFileInput'].forEach(id=>document.getElementById(id).value='');
+  ['salesBox','masterBox','shopBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  document.getElementById('salesBoxTitle').textContent='売上CSV';
+  document.getElementById('masterBoxTitle').textContent='マスターリストCSV';
+  document.getElementById('shopBoxTitle').textContent='ショップリストCSV';
+  ['salesBoxTitle','masterBoxTitle','shopBoxTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  document.getElementById('salesMainArea').style.display='none';
+  document.getElementById('salesUploadArea').style.display='flex';
+  document.getElementById('salesStartBtn').style.display='none';
+  document.getElementById('reloadPanel').style.display='none';
+  document.getElementById('totalCount').textContent='0件';
+}
+
+// ===== 公式CSVモード =====
+let officialRaw=[], officialData=[];
+let offMasterMap={}, offShopMap={};
+let offLoaded={official:false, master:false, shop:false};
+let offChartInstance=null;
+
+const TYPE_COLOR = {'Sticker':'#4495C1','Emoji':'#9B59B6','Theme':'#27ae60'};
+
+function readOfficialFile(file, type) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const rows = parseCSV(ev.target.result);
+    if (!rows.length) { alert('CSVにデータがありません。'); return; }
+    const cols = Object.keys(rows[0]);
+
+    if (type === 'official') {
+      if (!cols.includes('Item ID') || !cols.includes('Type')) {
+        alert('LINE Creators Market公式のCSVを選択してください。\n（「Type」「Item ID」列が見つかりませんでした）');
+        return;
+      }
+      officialRaw = rows;
+      offLoaded.official = true;
+      setOffBox('offOfficialBox','offOfficialTitle',`✅ 公式CSV（${rows.length}件）`);
+
+    } else if (type === 'master') {
+      if (!cols.includes('ID')) {
+        alert('マスターリストCSVが正しくありません。');
+        return;
+      }
+      offMasterMap = {};
+      rows.forEach(r => {
+        const id = r['ID'] || '';
+        const title = r['タイトル'] || '';
+        const cat = r['カテゴリ'] || '';
+        offMasterMap[id] = { title, cat, previewUrl: r['プレビューURL']||'' };
+      });
+      offLoaded.master = true;
+      setOffBox('offMasterBox','offMasterTitle',`✅ マスターリスト（${rows.length}件）`);
+
+    } else if (type === 'shop') {
+      if (!cols.includes('ショップURL')) {
+        alert('ショップリストCSVが正しくありません。');
+        return;
+      }
+      offShopMap = {};
+      offShopListOrder = [];
+      rows.forEach(r => {
+        const title = r['タイトル'] || '';
+        const cat   = r['カテゴリ'] || '';
+        const k = sKey(title, cat);
+        offShopMap[k] = {
+          shopUrl: r['ショップURL']||'',
+          lineAppUrl: r['LINEアプリURL']||'',
+          imageUrl: r['画像URL']||'',
+          kind: r['種別']||''
+        };
+        offShopListOrder.push(k);
+      });
+      offLoaded.shop = true;
+      setOffBox('offShopBox','offShopTitle',`✅ ショップリスト（${rows.length}件）`);
+    }
+
+    // 公式CSVがあれば開始ボタンを表示
+    document.getElementById('offStartBtn').style.display =
+      offLoaded.official ? 'inline-block' : 'none';
+  };
+  r.readAsText(file, 'UTF-8');
+}
+
+function setOffBox(boxId, titleId, text) {
+  document.getElementById(boxId).classList.add('loaded');
+  const t = document.getElementById(titleId);
+  t.textContent = text; t.classList.add('done');
+}
+
+// 公式CSVの日付形式 "2026.04.01" → "2026-04-01" に変換
+function parseOffDate(s) {
+  return (s||'').replace(/\./g,'-').slice(0,10);
+}
+
+function buildOfficialData() {
+  const agg = {};
+  officialRaw.forEach(r => {
+    const id        = r['Item ID'] || '';
+    const type      = r['Type'] || '';
+    const title     = r['Item Title'] || '';
+    const country   = r['Country of Sale'] || '';
+    const fromDate  = parseOffDate(r['From (GMT+9:00)'] || r['From'] || '');
+    const revPre    = parseFloat(r['Revenue Share (Pre-Tax)']||'0')||0;
+    const revPost   = parseFloat(r['Revenue Share']||'0')||0;
+    const sales     = parseFloat((r['Sales']||'0').replace(/[¥,]/g,''))||0;
+    const cnt       = parseInt(r['Sales Counts']||'0')||0;
+    const shareRate = parseFloat(r['Revenue Share Rate']||'0')||0;
+    const isPremRow = country === 'Premium';
+
+    const k = `${id}__${type}`;
+    if (!agg[k]) agg[k] = {
+      id, type, title,
+      total_revPre:0, total_revPost:0, total_sales:0, total_count:0,
+      prem_revPre:0, prem_revPost:0, prem_count:0,
+      countries:new Set(), shareRate, fromDate
+    };
+    agg[k].total_revPre  += revPre;
+    agg[k].total_revPost += revPost;
+    agg[k].total_sales   += sales;
+    agg[k].total_count   += cnt;
+    if (isPremRow) {
+      agg[k].prem_revPre  += revPre;
+      agg[k].prem_revPost += revPost;
+      agg[k].prem_count   += cnt;
+    }
+    if (!isPremRow) agg[k].countries.add(country);
+    // 最も新しいfromDateを保持
+    if (fromDate && (!agg[k].fromDate || fromDate > agg[k].fromDate)) agg[k].fromDate = fromDate;
+  });
+
+  officialData = Object.values(agg).map(item => {
+    const master  = offMasterMap[item.id] || {};
+    const jaTitle = master.title || '';
+    const cat     = master.cat  || (item.type==='Emoji' ? '絵文字' : item.type==='Theme' ? '着せ替え' : 'スタンプ');
+    const shopKey = sKey(jaTitle, cat);
+    const shop    = (jaTitle && offShopMap[shopKey]) ? offShopMap[shopKey] : {};
+    const thumb   = shop.imageUrl ? getThumbnail(shop.shopUrl, shop.imageUrl) : getThumbnail(shop.shopUrl, '');
+    return {
+      ...item,
+      jaTitle, cat,
+      countries: [...item.countries].filter(Boolean),
+      hasPremium: item.prem_revPost > 0,
+      thumb,
+      shopUrl:    shop.shopUrl    || '',
+      lineAppUrl: shop.lineAppUrl || '',
+      kind:       shop.kind       || ''
+    };
+  });
+
+  // 月リスト構築（FromのYYYY-MM部分を使用）
+  const months = [...new Set(
+    officialRaw.map(r => parseOffDate(r['From (GMT+9:00)'] || r['From'] || '').slice(0,7))
+  )].filter(Boolean).sort();
+  const mSel = document.getElementById('offMonthFilter');
+  mSel.innerHTML = '<option value="">すべての月</option>';
+  months.forEach(m => { const o=document.createElement('option');o.value=m;o.textContent=m;mSel.appendChild(o); });
+
+  // 国フィルター構築（Premiumを先頭に）
+  const allCountries = [...new Set(officialRaw.map(r=>r['Country of Sale']))].filter(Boolean).sort();
+  const cSel = document.getElementById('officialCountryFilter');
+  cSel.innerHTML = '<option value="">すべての国</option>';
+  allCountries.filter(c=>c!=='Premium').forEach(c => {
+    const o=document.createElement('option'); o.value=c; o.textContent=c; cSel.appendChild(o);
+  });
+  if (allCountries.includes('Premium')) {
+    const o=document.createElement('option'); o.value='Premium'; o.textContent='★ Premium'; cSel.appendChild(o);
+  }
+
+  updateOfficialSummary(officialData);
+  document.getElementById('officialUploadArea').style.display = 'none';
+  document.getElementById('officialMainArea').style.display = '';
+  document.getElementById('totalCount').textContent = officialData.length + '件';
+  renderOfficialGrid();
+}
+
+function onOffFilterChange() {
+  // 月選択と日付範囲は排他
+  const month = document.getElementById('offMonthFilter').value;
+  if (month) {
+    document.getElementById('offDateFrom').value = '';
+    document.getElementById('offDateTo').value = '';
+  }
+  renderOfficialGrid();
+}
+
+function updateOfficialSummary(data) {
+  // プレミアム判定はcountry='Premium'行で集計済みのprem_revPostを使う
+  const sumPre   = data.reduce((s,i)=>s+i.total_revPre, 0);
+  const sumPost  = data.reduce((s,i)=>s+i.total_revPost, 0);
+  const sumS     = data.filter(i=>i.type==='Sticker').reduce((s,i)=>s+(i.total_revPost-i.prem_revPost), 0);
+  const sumE     = data.filter(i=>i.type==='Emoji').reduce((s,i)=>s+(i.total_revPost-i.prem_revPost), 0);
+  const sumP     = data.reduce((s,i)=>s+i.prem_revPost, 0);
+  document.getElementById('sumRevenuePre').textContent  = '¥'+Math.round(sumPre).toLocaleString();
+  document.getElementById('sumRevenuePost').textContent = '¥'+Math.round(sumPost).toLocaleString();
+  document.getElementById('sumSticker').textContent     = '¥'+Math.round(sumS).toLocaleString();
+  document.getElementById('sumEmoji').textContent       = '¥'+Math.round(sumE).toLocaleString();
+  document.getElementById('sumPremium').textContent     = '¥'+Math.round(sumP).toLocaleString();
+  document.getElementById('sumPremiumWrap').style.display = data.some(i=>i.hasPremium) ? '' : 'none';
+}
+
+function renderOfficialGrid() {
+  const month    = document.getElementById('offMonthFilter').value;
+  const dateFrom = document.getElementById('offDateFrom').value;
+  const dateTo   = document.getElementById('offDateTo').value;
+  const typeF    = document.getElementById('officialTypeFilter').value;
+  const countryF = document.getElementById('officialCountryFilter').value;
+  const sort     = document.getElementById('officialSortFilter').value;
+
+  // 期間フィルターがある場合はrawから再集計
+  const hasPeriod = month || dateFrom || dateTo;
+  let filtered;
+
+  if (hasPeriod || countryF) {
+    const agg = {};
+    officialRaw.forEach(r => {
+      const from    = parseOffDate(r['From (GMT+9:00)'] || r['From'] || '');
+      const country = r['Country of Sale'] || '';
+      // 期間チェック
+      if (month && !from.startsWith(month)) return;
+      if (dateFrom && from < dateFrom) return;
+      if (dateTo   && from > dateTo)   return;
+      // 国フィルター
+      if (countryF && country !== countryF) return;
+
+      const id  = r['Item ID'] || '';
+      const type = r['Type'] || '';
+      const isPremRow = country === 'Premium';
+      const k = `${id}__${type}`;
+      if (!agg[k]) agg[k]={revPre:0,revPost:0,sales:0,count:0,premRevPost:0,countries:new Set()};
+      const revPost = parseFloat(r['Revenue Share']||'0')||0;
+      const revPre  = parseFloat(r['Revenue Share (Pre-Tax)']||'0')||0;
+      agg[k].revPre   += revPre;
+      agg[k].revPost  += revPost;
+      agg[k].sales    += parseFloat((r['Sales']||'0').replace(/[¥,]/g,''))||0;
+      agg[k].count    += parseInt(r['Sales Counts']||'0')||0;
+      if (isPremRow) agg[k].premRevPost += revPost;
+      if (!isPremRow) agg[k].countries.add(country);
+    });
+    filtered = officialData
+      .filter(i => agg[`${i.id}__${i.type}`])
+      .map(i => {
+        const a = agg[`${i.id}__${i.type}`];
+        return {...i,
+          total_revPre: a.revPre, total_revPost: a.revPost,
+          total_sales: a.sales, total_count: a.count,
+          prem_revPost: a.premRevPost,
+          hasPremium: a.premRevPost > 0,
+          countries: [...a.countries].filter(Boolean)
+        };
+      })
+      .filter(i => i.total_revPost > 0 || i.prem_revPost > 0);
+  } else {
+    filtered = [...officialData];
+  }
+
+  if (typeF === 'Premium') {
+    filtered = filtered.filter(i => i.hasPremium);
+  } else if (typeF) {
+    filtered = filtered.filter(i => i.type === typeF);
+  }
+
+  if (sort==='revenue') filtered.sort((a,b)=>b.total_revPost-a.total_revPost);
+  else if (sort==='sales') filtered.sort((a,b)=>b.total_sales-a.total_sales);
+  else if (sort==='count') filtered.sort((a,b)=>b.total_count-a.total_count);
+
+  updateOfficialSummary(filtered);
+  document.getElementById('officialInfo').textContent = filtered.length+'件';
+
+  if (offShopListOrder.length) buildOffShopOrderMap();
+
+  const grid = document.getElementById('officialGrid');
+  if (!filtered.length) { grid.innerHTML='<div class="empty-state">該当するデータがありません</div>'; return; }
+
+  grid.innerHTML = filtered.map((item, idx) => {
+    const dispTitle  = item.jaTitle || item.title;
+    const typeColor  = TYPE_COLOR[item.type] || '#999';
+    const badge      = `<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:${typeColor};color:white;font-weight:700;">${item.type}</span>`;
+    const premBadge  = item.hasPremium ? `<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:#e67e22;color:white;font-weight:700;">⭐P</span>` : '';
+    const countriesStr = item.countries.join(' / ');
+    const shopBtn    = item.shopUrl    ? `<button class="card-btn card-btn-shop" onclick="event.stopPropagation();window.open('${item.shopUrl}','_blank')">🌐 ショップ</button>` : '';
+    const appBtn     = item.lineAppUrl ? `<button class="card-btn card-btn-app"  onclick="event.stopPropagation();window.open('${item.lineAppUrl}','_blank')">📱 アプリ</button>` : '';
+    const premLine   = item.hasPremium ? `<div class="sales-meta" style="color:#e67e22">⭐ Premium ¥${Math.round(item.prem_revPost).toLocaleString()}</div>` : '';
+    const cardKey    = `${item.id}__${item.type}`;
+    const isSel      = offSelected.has(cardKey);
+    const shopKey    = sKey(item.jaTitle || item.title, item.cat);
+    const isTheme    = item.type === 'Theme';
+    const heatRatio  = offShopListOrderMap[shopKey];
+    const heatBar    = isTheme || heatRatio === undefined
+      ? `<div class="sales-heat-bar" style="background:#ddd"></div>`
+      : `<div class="sales-heat-bar" style="background:${offHeatColor(heatRatio)}"></div>`;
+    return `<div class="sales-card off-card${isSel?' selected':''}" data-id="${cardKey}" onclick="toggleOffCard('${cardKey}','${item.shopUrl}','${item.lineAppUrl}')">
+      <div class="sales-rank">${idx+1}</div>
+      <div class="sales-check" style="display:${isSel?'block':'none'}">✓</div>
+      ${item.thumb
+        ? `<img src="${item.thumb}" alt="${dispTitle}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f5f5f5;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+           <div style="display:none;width:100%;aspect-ratio:1;background:#f0f0f0;align-items:center;justify-content:center;font-size:28px;">📦</div>`
+        : `<div style="width:100%;aspect-ratio:1;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:28px;">📦</div>`
+      }
+      <div class="sales-card-info">
+        <div class="sales-title">${dispTitle}</div>
+        <div style="margin:3px 0;display:flex;gap:3px;flex-wrap:wrap">${badge}${premBadge} <span style="font-size:9px;color:#999">${countriesStr}</span></div>
+        <div class="sales-amount">¥${Math.round(item.total_revPost).toLocaleString()}</div>
+        <div class="sales-meta">税前 ¥${Math.round(item.total_revPre).toLocaleString()}　${item.shareRate}%　${item.total_count}件</div>
+        ${premLine}
+      </div>
+      ${(shopBtn||appBtn)?`<div class="card-buttons">${shopBtn}${appBtn}</div>`:''}
+      ${heatBar}
+    </div>`;
+  }).join('');
+}
+
+// ===== 公式CSVグラフ =====
+let offChartTab = 'item';
+
+function showOfficialCharts() {
+  document.getElementById('offChartOverlay').classList.add('visible');
+  buildOffCumulativeMonthList();
+  renderOfficialChart();
+}
+function hideOfficialCharts() {
+  document.getElementById('offChartOverlay').classList.remove('visible');
+}
+function switchOffChartTab(tab) {
+  offChartTab = tab;
+  const tabs = ['item','item_count','country','type','premium','cumulative'];
+  document.querySelectorAll('.off-chart-tab').forEach((t,i) => {
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  const isCumulative = tab === 'cumulative';
+  document.getElementById('offChartMainWrap').style.display       = isCumulative ? 'none' : '';
+  document.getElementById('offChartCumulativeWrap').style.display = isCumulative ? ''     : 'none';
+  document.getElementById('offCumulativeMonthSel').style.display  = isCumulative ? ''     : 'none';
+  if (isCumulative) renderOffCumulativeChart();
+  else renderOfficialChart();
+}
+
+function getOffFilteredRaw() {
+  const month    = document.getElementById('offMonthFilter').value;
+  const dateFrom = document.getElementById('offDateFrom').value;
+  const dateTo   = document.getElementById('offDateTo').value;
+  const typeF    = document.getElementById('officialTypeFilter').value;
+  return officialRaw.filter(r => {
+    const from = parseOffDate(r['From (GMT+9:00)'] || r['From'] || '');
+    if (month    && !from.startsWith(month)) return false;
+    if (dateFrom && from < dateFrom) return false;
+    if (dateTo   && from > dateTo)   return false;
+    if (typeF    && r['Type'] !== typeF) return false;
+    return true;
+  });
+}
+
+function renderOfficialChart() {
+  if (offChartInstance) { offChartInstance.destroy(); offChartInstance=null; }
+  const canvas = document.getElementById('offChartCanvas');
+  const summary = document.getElementById('offChartSummary');
+
+  // 現在のフィルター状態を取得
+  const typeF    = document.getElementById('officialTypeFilter').value;
+  const countryF = document.getElementById('officialCountryFilter').value;
+  let base = [...officialData];
+  if (typeF) base = base.filter(i=>i.type===typeF);
+  // countryFがある場合は再集計済みデータを使いたいが、グラフはofficialdataベースで十分
+
+  if (offChartTab === 'item') {
+    // 作品別分配金（全件）Sticker/Emoji/Premiumで色分け
+    let sorted = [...base].sort((a,b)=>b.total_revPost-a.total_revPost);
+    let labels = sorted.map(i=>{
+      const t = i.jaTitle||i.title;
+      return t.length>14 ? t.slice(0,13)+'…' : t;
+    });
+    let total = sorted.reduce((s,i)=>s+i.total_revPost,0);
+    summary.textContent = `総分配金：¥${Math.round(total).toLocaleString()}　全${sorted.length}件`;
+    summary.style.display='block';
+
+    // Sticker/Emoji/Theme個別・Premium の系列
+    const dataStickerIndiv = sorted.map(i=>i.type==='Sticker' ? Math.round(i.total_revPost-i.prem_revPost) : 0);
+    const dataEmojiIndiv   = sorted.map(i=>i.type==='Emoji'   ? Math.round(i.total_revPost-i.prem_revPost) : 0);
+    const dataThemeIndiv   = sorted.map(i=>i.type==='Theme'   ? Math.round(i.total_revPost-i.prem_revPost) : 0);
+    const dataStickerPrem  = sorted.map(i=>i.type==='Sticker' ? Math.round(i.prem_revPost) : 0);
+    const dataEmojiPrem    = sorted.map(i=>i.type==='Emoji'   ? Math.round(i.prem_revPost) : 0);
+    const dataThemePrem    = sorted.map(i=>i.type==='Theme'   ? Math.round(i.prem_revPost) : 0);
+
+    let datasets = [
+      {label:'Sticker（個別）', data:dataStickerIndiv, backgroundColor:'#4495C1', stack:'s'},
+      {label:'Emoji（個別）',   data:dataEmojiIndiv,   backgroundColor:'#9B59B6', stack:'s'},
+      {label:'Theme（個別）',   data:dataThemeIndiv,   backgroundColor:'#27ae60', stack:'s'},
+      {label:'Sticker Premium', data:dataStickerPrem,  backgroundColor:'#e8a87c', stack:'s'},
+      {label:'Emoji Premium',   data:dataEmojiPrem,    backgroundColor:'#e67e22', stack:'s'},
+      {label:'Theme Premium',   data:dataThemePrem,    backgroundColor:'#f39c12', stack:'s'},
+    ].filter(d=>d.data.some(v=>v>0));
+
+    offChartInstance = new Chart(canvas, {
+      type:'bar',
+      data:{labels, datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'top'},
+          tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label(ctx){ const v=ctx.parsed.y||0; return v===0?null:` ${ctx.dataset.label}：¥${v.toLocaleString()}`; },
+              afterBody(items){
+                const total=items.reduce((s,i)=>s+(i.parsed.y||0),0);
+                return [`────────\n 合計：¥${total.toLocaleString()}`];
+              }
+            }
+          }
+        },
+        scales:{x:{stacked:true,ticks:{maxRotation:60,font:{size:9}}}, y:{stacked:true,beginAtZero:true,title:{display:true,text:'分配金（円）'}}}
+      }
+    });
+
+  } else if (offChartTab === 'item_count') {
+    // 作品別件数（個別＋Premium合計でソート）
+    let sorted = [...base].sort((a,b)=>b.total_count-a.total_count);
+    let labels = sorted.map(i=>{ const t=i.jaTitle||i.title; return t.length>14?t.slice(0,13)+'…':t; });
+    let total  = sorted.reduce((s,i)=>s+i.total_count,0);
+    summary.textContent = `総件数：${total}件　全${sorted.length}件`;
+    summary.style.display='block';
+    const dataStickerCnt = sorted.map(i=>i.type==='Sticker' ? Math.max(0, i.total_count - i.prem_count) : 0);
+    const dataEmojiCnt   = sorted.map(i=>i.type==='Emoji'   ? Math.max(0, i.total_count - i.prem_count) : 0);
+    const dataThemeCnt   = sorted.map(i=>i.type==='Theme'   ? Math.max(0, i.total_count - i.prem_count) : 0);
+    const dataStickerPCnt= sorted.map(i=>i.type==='Sticker' ? i.prem_count : 0);
+    const dataEmojiPCnt  = sorted.map(i=>i.type==='Emoji'   ? i.prem_count : 0);
+    const dataThemePCnt  = sorted.map(i=>i.type==='Theme'   ? i.prem_count : 0);
+    let datasets = [
+      {label:'Sticker（個別）', data:dataStickerCnt,  backgroundColor:'#4495C1', stack:'s', order:1},
+      {label:'Emoji（個別）',   data:dataEmojiCnt,    backgroundColor:'#9B59B6', stack:'s', order:2},
+      {label:'Theme（個別）',   data:dataThemeCnt,    backgroundColor:'#27ae60', stack:'s', order:3},
+      {label:'Sticker Premium', data:dataStickerPCnt, backgroundColor:'#e8a87c', stack:'s', order:4},
+      {label:'Emoji Premium',   data:dataEmojiPCnt,   backgroundColor:'#e67e22', stack:'s', order:5},
+      {label:'Theme Premium',   data:dataThemePCnt,   backgroundColor:'#f39c12', stack:'s', order:6},
+    ].filter(d=>d.data.some(v=>v>0));
+    offChartInstance = new Chart(canvas, {
+      type:'bar', data:{labels, datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'top'},
+          tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label(ctx){ const v=ctx.parsed.y||0; return v===0?null:` ${ctx.dataset.label}：${v}件`; },
+              afterBody(items){
+                const total=items.reduce((s,i)=>s+(i.parsed.y||0),0);
+                return [`────────\n 合計：${total}件`];
+              }
+            }
+          }
+        },
+        scales:{x:{stacked:true,ticks:{maxRotation:60,font:{size:9}}}, y:{stacked:true,beginAtZero:true,title:{display:true,text:'件数'}}}
+      }
+    });
+
+
+  } else if (offChartTab === 'type') {
+    // Type別（Sticker/Emoji/Theme個別・Premium合計）
+    let sIndiv = base.filter(i=>i.type==='Sticker').reduce((s,i)=>s+(i.total_revPost-i.prem_revPost),0);
+    let eIndiv = base.filter(i=>i.type==='Emoji'  ).reduce((s,i)=>s+(i.total_revPost-i.prem_revPost),0);
+    let tIndiv = base.filter(i=>i.type==='Theme'  ).reduce((s,i)=>s+(i.total_revPost-i.prem_revPost),0);
+    let pTotal = base.reduce((s,i)=>s+i.prem_revPost,0);
+    let total  = sIndiv+eIndiv+tIndiv+pTotal;
+    summary.textContent = `総分配金：¥${Math.round(total).toLocaleString()}`;
+    summary.style.display='block';
+    let pieData = [
+      {label:'スタンプ', value:Math.round(sIndiv), color:'#4495C1'},
+      {label:'絵文字',   value:Math.round(eIndiv), color:'#9B59B6'},
+      {label:'着せ替え', value:Math.round(tIndiv), color:'#27ae60'},
+      {label:'Premium',  value:Math.round(pTotal), color:'#e67e22'},
+    ].filter(d=>d.value>0);
+    const richPieLabels = pieData.map(d=>{
+      const pct = total>0 ? Math.round(d.value/total*100) : 0;
+      return `${d.label}（¥${d.value.toLocaleString()}・${pct}%）`;
+    });
+    offChartInstance = new Chart(canvas, {
+      type:'doughnut',
+      data:{
+        labels: richPieLabels,
+        datasets:[{data: pieData.map(d=>d.value), backgroundColor: pieData.map(d=>d.color)}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+    });
+
+  } else if (offChartTab === 'country') {
+    // 国別（Premium含む）
+    let countryAgg = {};
+    getOffFilteredRaw().forEach(r=>{
+      const c = r['Country of Sale'];
+      if (!countryAgg[c]) countryAgg[c]=0;
+      countryAgg[c] += parseFloat(r['Revenue Share']||'0')||0;
+    });
+    let sorted = Object.entries(countryAgg).sort((a,b)=>b[1]-a[1]);
+    let total  = sorted.reduce((s,[,v])=>s+v,0);
+    summary.textContent = `総分配金：¥${Math.round(total).toLocaleString()}`;
+    summary.style.display='block';
+    const bgColors = ['#06C755','#4495C1','#e67e22','#9B59B6','#e74c3c','#2ecc71','#f39c12','#1abc9c','#95a5a6','#34495e'];
+    // Premiumは必ずオレンジに
+    const colorMap = {'Premium':'#e67e22'};
+    let colorIdx = 0;
+    const assignedColors = sorted.map(([c])=>{
+      if (colorMap[c]) return colorMap[c];
+      // オレンジは既にPremium用なのでスキップ
+      while (bgColors[colorIdx] === '#e67e22') colorIdx++;
+      return bgColors[colorIdx++] || '#ccc';
+    });
+    const rawForCount = getOffFilteredRaw();
+    const richLabels = sorted.map(([c, v])=>{
+      const cnt = rawForCount.filter(r=>r['Country of Sale']===c).length;
+      const pct = total>0 ? Math.round(v/total*100) : 0;
+      return `${c}（${cnt}件・${pct}%）`;
+    });
+    offChartInstance = new Chart(canvas, {
+      type:'pie',
+      data:{
+        labels: richLabels,
+        datasets:[{data: sorted.map(([,v])=>Math.round(v)), backgroundColor: assignedColors}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+    });
+
+  } else if (offChartTab === 'premium') {
+    // プレミアム上位作品
+    let premItems = [...base].filter(i=>i.hasPremium).sort((a,b)=>b.prem_revPost-a.prem_revPost).slice(0,20);
+    if (!premItems.length) {
+      summary.textContent='プレミアムデータがありません';summary.style.display='block';return;
+    }
+    let labels  = premItems.map(i=>(i.jaTitle||i.title).slice(0,14));
+    let data    = premItems.map(i=>Math.round(i.prem_revPost));
+    let total   = data.reduce((s,v)=>s+v,0);
+    summary.textContent=`Premium 総分配金：¥${Math.round(total).toLocaleString()}　${premItems.length}件`;
+    summary.style.display='block';
+    offChartInstance = new Chart(canvas, {
+      type:'bar',
+      data:{labels, datasets:[{label:'Premium分配金', data, backgroundColor:'#e67e22'}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{maxRotation:60,font:{size:9}}}, y:{beginAtZero:true,title:{display:true,text:'分配金（円）'}}}}
+    });
+  }
+}
+
+// ===== 公式CSV年次累積グラフ =====
+let offCumulativeChartInstance = null;
+
+function buildOffCumulativeMonthList() {
+  // 年リストを構築（年次なので年単位）
+  const years = [...new Set(
+    officialRaw.map(r => parseOffDate(r['From (GMT+9:00)']||r['From']||'').slice(0,4))
+  )].filter(Boolean).sort();
+  const sel = document.getElementById('offCumulativeMonthSel');
+  sel.innerHTML = '';
+  years.forEach(y => {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y+'年'; sel.appendChild(o);
+  });
+  if (years.length) sel.value = years[years.length-1];
+}
+
+function renderOffCumulativeChart() {
+  if (offCumulativeChartInstance) { offCumulativeChartInstance.destroy(); offCumulativeChartInstance=null; }
+  const sel  = document.getElementById('offCumulativeMonthSel');
+  const year = sel.value;
+  if (!year || !officialRaw.length) return;
+
+  // 選択年のデータを月別に集計
+  const monthAgg = {};
+  for (let m=1; m<=12; m++) {
+    const key = `${year}-${String(m).padStart(2,'0')}`;
+    monthAgg[key] = {sticker:0, emoji:0, theme:0, premium:0, total:0};
+  }
+
+  officialRaw.forEach(r => {
+    const from = parseOffDate(r['From (GMT+9:00)']||r['From']||'');
+    if (!from.startsWith(year)) return;
+    const monthKey = from.slice(0,7);
+    if (!monthAgg[monthKey]) return;
+    const rev     = parseFloat(r['Revenue Share']||'0')||0;
+    const country = r['Country of Sale']||'';
+    const type    = r['Type']||'';
+    if (country === 'Premium') {
+      monthAgg[monthKey].premium += rev;
+    } else if (type === 'Sticker') {
+      monthAgg[monthKey].sticker += rev;
+    } else if (type === 'Emoji') {
+      monthAgg[monthKey].emoji += rev;
+    } else if (type === 'Theme') {
+      monthAgg[monthKey].theme += rev;
+    }
+    monthAgg[monthKey].total += rev;
+  });
+
+  // データのある月だけ表示
+  const months = Object.keys(monthAgg).filter(k => monthAgg[k].total > 0);
+  if (!months.length) {
+    const summary = document.getElementById('offChartSummary');
+    summary.textContent = `${year}年のデータがありません`;
+    summary.style.display = 'block';
+    return;
+  }
+
+  const labels        = months.map(k => `${parseInt(k.slice(5))}月`);
+  const dataSticker   = months.map(k => Math.round(monthAgg[k].sticker));
+  const dataEmoji     = months.map(k => Math.round(monthAgg[k].emoji));
+  const dataTheme     = months.map(k => Math.round(monthAgg[k].theme));
+  const dataPremium   = months.map(k => Math.round(monthAgg[k].premium));
+
+  // 累積ライン
+  let cumul = 0;
+  const dataCumul = months.map(k => {
+    cumul += monthAgg[k].total;
+    return Math.round(cumul);
+  });
+
+  const yearTotal   = cumul;
+  const yearPremium = months.reduce((s,k)=>s+monthAgg[k].premium, 0);
+
+  const summary = document.getElementById('offChartSummary');
+  summary.innerHTML = `${year}年 累計分配金：¥${Math.round(yearTotal).toLocaleString()}　うちPremium：¥${Math.round(yearPremium).toLocaleString()}　（${months.length}ヶ月分）`;
+  summary.style.display = 'block';
+
+  const datasets = [
+    {label:'スタンプ', data:dataSticker, backgroundColor:'#4495C1', stack:'s', type:'bar', yAxisID:'y'},
+    {label:'絵文字',   data:dataEmoji,   backgroundColor:'#9B59B6', stack:'s', type:'bar', yAxisID:'y'},
+    {label:'着せ替え', data:dataTheme,   backgroundColor:'#27ae60', stack:'s', type:'bar', yAxisID:'y'},
+    {label:'Premium',  data:dataPremium, backgroundColor:'#e67e22', stack:'s', type:'bar', yAxisID:'y'},
+    {
+      label:'累積', data:dataCumul,
+      type:'line', yAxisID:'y2',
+      borderColor:'#2c3e50', backgroundColor:'transparent',
+      borderWidth:2.5, pointRadius:4, pointHoverRadius:7,
+      fill:false, tension:0.3, order:0
+    }
+  ].filter(d => d.label==='累積' || d.data.some(v=>v>0));
+
+  offCumulativeChartInstance = new Chart(
+    document.getElementById('offChartCumulative'),
+    {
+      type:'bar',
+      data:{labels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'bottom'},
+          tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label(ctx){
+                const v = ctx.parsed.y;
+                if (!v) return null;
+                return ` ${ctx.dataset.label}：¥${Math.round(v).toLocaleString()}`;
+              }
+            }
+          }
+        },
+        scales:{
+          x:{stacked:true, ticks:{font:{size:10}}},
+          y:{stacked:true, beginAtZero:true, position:'left',
+             title:{display:true, text:'月別分配金（円）'},
+             ticks:{callback:v=>`¥${v.toLocaleString()}`}},
+          y2:{beginAtZero:true, position:'right',
+              title:{display:true, text:'累積（円）'},
+              ticks:{callback:v=>`¥${v.toLocaleString()}`},
+              grid:{drawOnChartArea:false}}
+        }
+      }
+    }
+  );
+}
+
+function saveOffChartImage(){
+  const isCumulative = offChartTab === 'cumulative';
+  const canvas = document.getElementById(isCumulative ? 'offChartCumulative' : 'offChartCanvas');
+  const a=document.createElement('a');
+  a.download=`公式CSV_グラフ_${offChartTab}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+
+function resetOfficial() {
+  officialRaw=[]; officialData=[]; offMasterMap={}; offShopMap={};
+  offShopListOrder=[]; offShopListOrderMap={};
+  offLoaded={official:false,master:false,shop:false};
+  if(offChartInstance){offChartInstance.destroy();offChartInstance=null;}
+  document.getElementById('offChartOverlay').classList.remove('visible');
+  ['offOfficialInput','offMasterInput','offShopInput'].forEach(id=>document.getElementById(id).value='');
+  ['offOfficialBox','offMasterBox','offShopBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  document.getElementById('offOfficialTitle').textContent='公式CSV';
+  document.getElementById('offMasterTitle').textContent='マスターリストCSV';
+  document.getElementById('offShopTitle').textContent='ショップリストCSV';
+  ['offOfficialTitle','offMasterTitle','offShopTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  document.getElementById('officialMainArea').style.display='none';
+  document.getElementById('officialUploadArea').style.display='flex';
+  document.getElementById('offStartBtn').style.display='none';
+  document.getElementById('offReloadPanel').style.display='none';
+  offHeatmapOn=true; offHeatThreshold=0.5;
+  const offSlider=document.getElementById('offHeatSlider');
+  if(offSlider) offSlider.value=50;
+  const offSliderVal=document.getElementById('offHeatSliderVal');
+  if(offSliderVal) offSliderVal.textContent='50%';
+  offSelected = new Map();
+  document.getElementById('offOutputPanel').classList.remove('visible');
+  document.getElementById('offMonthFilter').innerHTML='<option value="">すべての月</option>';
+  document.getElementById('offDateFrom').value='';
+  document.getElementById('offDateTo').value='';
+  document.getElementById('officialTypeFilter').value='';
+  document.getElementById('officialCountryFilter').innerHTML='<option value="">すべての国</option>';
+  document.getElementById('officialInfo').textContent='0件';
+  document.getElementById('totalCount').textContent='0件';
+}
+
+let offHeatmapOn = true;
+let offHeatThreshold = 0.5;
+let offShopListOrder = [];
+let offShopListOrderMap = {};
+
+function onOffHeatSliderChange(val) {
+  offHeatThreshold = val / 100;
+  document.getElementById('offHeatSliderVal').textContent = val + '%';
+  renderOfficialGrid();
+}
+
+function offHeatColor(ratio) {
+  const t = offHeatThreshold;
+  if (ratio <= t) {
+    const r = ratio / t;
+    const hue = Math.round(r * 30);
+    return `hsl(${hue},90%,50%)`;
+  } else {
+    const r = (ratio - t) / (1 - t);
+    const hue = Math.round(80 + r * 140);
+    return `hsl(${hue},70%,45%)`;
+  }
+}
+
+function buildOffShopOrderMap() {
+  offShopListOrderMap = {};
+  const filtered = offShopListOrder.filter(k => !k.includes('着せ替え'));
+  const total = filtered.length;
+  filtered.forEach((k, rank) => {
+    offShopListOrderMap[k] = rank / (total - 1 || 1);
+  });
+}
+
+function toggleOffReloadPanel() {
+  const p = document.getElementById('offReloadPanel');
+  p.style.display = p.style.display === 'none' || p.style.display === '' ? 'block' : 'none';
+  // ラベルをリセット
+  if (p.style.display !== 'none') {
+    document.getElementById('offReloadOfficialLabel').textContent = '公式CSV';
+    document.getElementById('offReloadMasterLabel').textContent   = 'マスターリストCSV';
+    document.getElementById('offReloadShopLabel').textContent     = 'ショップリストCSV';
+  }
+}
+
+// 公式CSV選択管理
+let offSelected = new Map();
+
+function toggleOffCard(id, shopUrl, lineAppUrl) {
+  if (offSelected.has(id)) {
+    offSelected.delete(id);
+  } else {
+    offSelected.set(id, {shopUrl, lineAppUrl});
+  }
+  updateOffOutputPanel();
+  // カードのselectedクラスを更新
+  document.querySelectorAll('.off-card[data-id]').forEach(el => {
+    el.classList.toggle('selected', offSelected.has(el.dataset.id));
+    const chk = el.querySelector('.sales-check');
+    if (chk) chk.style.display = offSelected.has(el.dataset.id) ? 'block' : 'none';
+  });
+}
+
+function updateOffOutputPanel() {
+  const panel = document.getElementById('offOutputPanel');
+  if (offSelected.size === 0) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+  document.getElementById('offOutputCount').textContent = offSelected.size;
+  copyOffUrls('shop', false);
+}
+
+function copyOffUrls(type, doCopy=true) {
+  const urls = [...offSelected.values()].map(v => type==='shop' ? v.shopUrl : v.lineAppUrl).filter(Boolean);
+  document.getElementById('offOutputText').value = urls.join('\n');
+  if (doCopy) {
+    navigator.clipboard.writeText(urls.join('\n')).then(()=>{
+      const el = document.getElementById('offCopySuccess');
+      el.style.display='inline'; setTimeout(()=>el.style.display='none', 2000);
+    });
+  }
+}
+document.getElementById('offMasterInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'master');});
+document.getElementById('offShopInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'shop');});
+
+// イベントリスナー（リロードパネル）
+document.getElementById('offReloadOfficialInput').addEventListener('change',e=>{
+  if(e.target.files[0]){
+    readOfficialFile(e.target.files[0],'official');
+    document.getElementById('offReloadOfficialLabel').textContent='✅ 読み込み完了';
+    document.getElementById('offReloadOfficialBox').style.borderColor='#06C755';
+    document.getElementById('offReloadOfficialBox').style.background='#f0fff4';
+  }
+});
+document.getElementById('offReloadMasterInput').addEventListener('change',e=>{
+  if(e.target.files[0]){
+    readOfficialFile(e.target.files[0],'master');
+    document.getElementById('offReloadMasterLabel').textContent='✅ 読み込み完了';
+    document.getElementById('offReloadMasterBox').style.borderColor='#06C755';
+    document.getElementById('offReloadMasterBox').style.background='#f0fff4';
+  }
+});
+document.getElementById('offReloadShopInput').addEventListener('change',e=>{
+  if(e.target.files[0]){
+    readOfficialFile(e.target.files[0],'shop');
+    document.getElementById('offReloadShopLabel').textContent='✅ 読み込み完了';
+    document.getElementById('offReloadShopBox').style.borderColor='#06C755';
+    document.getElementById('offReloadShopBox').style.background='#f0fff4';
+  }
+});
+
+// ドラッグ&ドロップ（初期アップロード）
+[['offOfficialBox','official'],['offMasterBox','master'],['offShopBox','shop']].forEach(([boxId,type])=>{
+  const box=document.getElementById(boxId);
+  box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
+  box.addEventListener('dragleave',e=>{e.stopPropagation();if(!box.classList.contains('loaded')){box.style.borderColor='';box.style.background='';}});
+  box.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();box.style.borderColor='';box.style.background='';
+    const f=e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.csv')) readOfficialFile(f,type);
+  });
+});
+
+// ドラッグ&ドロップ（リロードパネル）
+[['offReloadOfficialBox','official','offReloadOfficialLabel'],['offReloadMasterBox','master','offReloadMasterLabel'],['offReloadShopBox','shop','offReloadShopLabel']].forEach(([boxId,type,labelId])=>{
+  const box=document.getElementById(boxId);
+  box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
+  box.addEventListener('dragleave',e=>{
+    e.stopPropagation();
+    // 読み込み完了済みなら緑を維持
+    if(document.getElementById(labelId).textContent.includes('完了')){return;}
+    box.style.borderColor='';box.style.background='white';
+  });
+  box.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();
+    const f=e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.csv')){
+      readOfficialFile(f,type);
+      document.getElementById(labelId).textContent='✅ 読み込み完了';
+      box.style.borderColor='#06C755';
+      box.style.background='#f0fff4';
+    } else {
+      box.style.borderColor='';box.style.background='white';
+    }
+  });
+});
+</script>
+</body>
+</html>
