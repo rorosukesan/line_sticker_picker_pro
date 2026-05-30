@@ -161,7 +161,7 @@
     <span style="font-size:12px;color:#aaa;">他のCSVは任意です。読み込むと情報が追加されます。</span>
   </div>
   <div class="upload-grid">
-    <div class="upload-box required" id="box_saledate" onclick="document.getElementById('input_saledate').click()">
+    <div class="upload-box" id="box_saledate" onclick="document.getElementById('input_saledate').click()">
       <div class="s-icon">📅</div>
       <h3 id="title_saledate">販売日CSV <span class="badge badge-req">必須</span></h3>
       <p>LINE販売日スキャナー<br>のCSV</p>
@@ -346,8 +346,7 @@ function readFile(file, type) {
       setBox('box_saledate','title_saledate',`✅ 販売日CSV（${rows.length}件）`);
       setRBox('rbox_saledate','rlabel_saledate','販売日CSV');
 
-    } else if (type === 'sales') {
-      if (!cols.includes('売上') || !cols.includes('タイトル')) {
+    } else if (type === 'sales') {      if (!cols.includes('売上') || !cols.includes('タイトル')) {
         alert('売上CSVが正しくありません'); return;
       }
       salesAgg = {};
@@ -398,8 +397,10 @@ function readFile(file, type) {
       setRBox('rbox_official','rlabel_official','公式CSV');
     }
 
+    // 販売日CSVがあればボタンを表示
     document.getElementById('startBtn').style.display = loaded.saledate ? 'inline-block' : 'none';
-    if (loaded.saledate) buildData();
+    // 既に表示中（mainAreaが表示されている）なら再ビルド
+    if (document.getElementById('mainArea').style.display !== 'none') buildData();
   };
   r.readAsText(file, 'UTF-8');
 }
