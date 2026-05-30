@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINEスタンプピッカー Pro v2</title>
+<title>LINEスタンプピッカー Pro v3</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -174,7 +174,7 @@
 
 <div class="header">
   <span>🛒</span>
-  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v2</span></h1>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3</span></h1>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('pickup')">ピックアップ</button>
     <button class="mode-tab" onclick="switchMode('sales')">📊 売上分析</button>
@@ -246,6 +246,12 @@
         <p>LINEショップスキャナー<br>のCSV</p>
         <input type="file" id="shopFileInput" accept=".csv">
       </div>
+      <div class="sales-upload-box" id="saleDateBox" onclick="document.getElementById('saleDateFileInput').click()">
+        <div class="s-icon">📅</div>
+        <h3 id="saleDateBoxTitle">販売日CSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span></h3>
+        <p>LINE販売日スキャナー<br>のCSV（オプション）</p>
+        <input type="file" id="saleDateFileInput" accept=".csv">
+      </div>
     </div>
     <button class="btn btn-green" id="salesStartBtn" style="display:none" onclick="buildSalesData()">▶ 分析を開始</button>
   </div>
@@ -269,6 +275,11 @@
           <span style="font-size:20px;">🛒</span>
           <span id="reloadShopLabel">ショップリストCSV</span>
           <input type="file" id="reloadShopInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="reloadSaleDateBox">
+          <span style="font-size:20px;">📅</span>
+          <span id="reloadSaleDateLabel">販売日CSV（任意）</span>
+          <input type="file" id="reloadSaleDateInput" accept=".csv" style="display:none">
         </label>
         <button class="btn btn-gray" style="align-self:center;" onclick="toggleReloadPanel()">✕ 閉じる</button>
       </div>
@@ -294,8 +305,10 @@
         <option value="count">件数順</option>
         <option value="newest">最新の売れた順</option>
         <option value="oldest">最古の売れた順</option>
+        <option value="saledate_new">販売日：新しい順</option>
+        <option value="saledate_old">販売日：古い順</option>
       </select>
-      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;flex-wrap:nowrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;flex-wrap:nowrap" id="heatControl">
         <span style="color:#e74c3c">新</span>
         <input type="range" id="heatSlider" min="1" max="99" value="50"
           style="width:80px;accent-color:#06C755" oninput="onHeatSliderChange(this.value)">
@@ -351,6 +364,12 @@
         <p>LINEショップスキャナー<br>のCSV</p>
         <input type="file" id="offShopInput" accept=".csv">
       </div>
+      <div class="sales-upload-box" id="offSaleDateBox" onclick="document.getElementById('offSaleDateInput').click()">
+        <div class="s-icon">📅</div>
+        <h3 id="offSaleDateTitle">販売日CSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span></h3>
+        <p>LINE販売日スキャナー<br>のCSV（オプション）</p>
+        <input type="file" id="offSaleDateInput" accept=".csv">
+      </div>
     </div>
     <button class="btn btn-green" id="offStartBtn" style="display:none" onclick="buildOfficialData()">▶ 分析を開始</button>
   </div>
@@ -374,6 +393,11 @@
           <span style="font-size:20px;">🛒</span>
           <span id="offReloadShopLabel">ショップリストCSV</span>
           <input type="file" id="offReloadShopInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="offReloadSaleDateBox">
+          <span style="font-size:20px;">📅</span>
+          <span id="offReloadSaleDateLabel">販売日CSV（任意）</span>
+          <input type="file" id="offReloadSaleDateInput" accept=".csv" style="display:none">
         </label>
         <button class="btn btn-gray" style="align-self:center;" onclick="toggleOffReloadPanel()">✕ 閉じる</button>
       </div>
@@ -400,6 +424,8 @@
         <option value="revenue">分配金順</option>
         <option value="sales">売上額順</option>
         <option value="count">件数順</option>
+        <option value="saledate_new">販売日：新しい順</option>
+        <option value="saledate_old">販売日：古い順</option>
       </select>
       <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;flex-wrap:nowrap">
         <span style="color:#e74c3c">新</span>
@@ -587,6 +613,15 @@ function parseCSV(text) {
 
 function parseYen(s) { return parseInt((s||'').replace(/[￥,]/g,''))||0; }
 
+// 日付を YYYY-MM-DD 形式に正規化（ゼロ埋め）
+function normalizeDate(s) {
+  if (!s) return '';
+  const parts = s.replace(/\//g, '-').split('-');
+  if (parts.length !== 3) return s.replace(/\//g, '-');
+  const [y, m, d] = parts;
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
 function getThumbnail(shopUrl, imageUrl) {
   if (!shopUrl && !imageUrl) return '';
   if (shopUrl && shopUrl.includes('/themeshop/')) return imageUrl||'';
@@ -712,7 +747,10 @@ function copyUrls(type){
 
 // ===== 売上分析モード =====
 let rawSales=[], masterMap={}, shopMap={}, salesData=[], shopListOrder=[];
+let saleDateMap={};  // key: sKey(title,cat) → {saleDate, cumSales, thumbUrl, itemId}
+let saleDateIdMap={}; // key: itemId → same
 let salesLoaded={sales:false,master:false,shop:false};
+let heatBorderDate=''; // ヒートマップの境界日付
 let salesSelected=new Map(); // key→shopUrl
 
 function toggleSalesSelect(k,shopUrl,appUrl){
@@ -788,6 +826,46 @@ function readSalesFile(file,type){
   r.readAsText(file,'UTF-8');
 }
 
+function readSaleDateFile(file) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const rows = parseCSV(ev.target.result);
+    if (!rows.length) { alert('CSVにデータがありません。'); return; }
+    const cols = Object.keys(rows[0]);
+    if (!cols.includes('販売開始日') || !cols.includes('タイトル')) {
+      alert('販売日CSVが正しくありません。\n（「タイトル」「販売開始日」列が必要です）');
+      return;
+    }
+    saleDateMap = {};
+    saleDateIdMap = {};
+    rows.forEach(r => {
+      const title   = r['タイトル'] || '';
+      const cat     = r['カテゴリ'] || '';
+      const itemId  = r['アイテムID'] || '';
+      const saleDate = normalizeDate(r['販売開始日']||'');
+      const cumSales = parseInt((r['売上（累計）']||'0').replace(/[^\d]/g,''))||0;
+      const thumbUrl = r['サムネイルURL'] || '';
+      const data = { saleDate, cumSales, thumbUrl, itemId, title, cat };
+      const k = sKey(title, cat);
+      saleDateMap[k] = data;
+      if (itemId) saleDateIdMap[itemId] = data;
+    });
+
+    setBox('saleDateBox','saleDateBoxTitle',`✅ 販売日CSV（${rows.length}件）`);
+
+    // ソートオプションを有効化
+    const sortSel = document.getElementById('sortFilter');
+    [...sortSel.options].forEach(o => {
+      if (o.value.startsWith('saledate')) o.disabled = false;
+    });
+
+    // 既にsalesDataがあれば再ビルド
+    if (salesData.length) buildSalesData();
+    else renderSalesGrid();
+  };
+  r.readAsText(file, 'UTF-8');
+}
+
 function setBox(boxId,titleId,text){
   document.getElementById(boxId).classList.add('loaded');
   const t=document.getElementById(titleId); t.textContent=text; t.classList.add('done');
@@ -798,15 +876,18 @@ document.getElementById('masterFileInput').addEventListener('change',e=>{if(e.ta
 document.getElementById('shopFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'shop');});
 
 // 売上モードのドラッグ&ドロップ
-['salesBox','masterBox','shopBox'].forEach((boxId,i)=>{
-  const types=['sales','master','shop'];
+['salesBox','masterBox','shopBox','saleDateBox'].forEach((boxId,i)=>{
+  const types=['sales','master','shop','saledate'];
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';});
   box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';});
   box.addEventListener('drop',e=>{
     e.preventDefault();e.stopPropagation();box.style.borderColor='';
     const f=e.dataTransfer.files[0];
-    if(f&&f.name.endsWith('.csv')) readSalesFile(f,types[i]);
+    if(f&&f.name.endsWith('.csv')){
+      if(types[i]==='saledate') readSaleDateFile(f);
+      else readSalesFile(f,types[i]);
+    }
   });
 });
 
@@ -825,7 +906,10 @@ function buildSalesData(){
     const sortedDates=[...item.dates].map(d=>d.replace(/\//g,'-')).sort();
     const newestDate=sortedDates[sortedDates.length-1];
     const oldestDate=sortedDates[0];
-    return {...item, previewUrl:m.previewUrl||'', id:m.id||'', shopUrl:s.shopUrl||'', lineAppUrl:s.lineAppUrl||'', kind:s.kind||'', thumb, newestDate, oldestDate};
+    // 販売日CSV情報を統合
+    const sd = saleDateMap[k] || {};
+    const thumbFinal = thumb || sd.thumbUrl || '';
+    return {...item, previewUrl:m.previewUrl||'', id:m.id||sd.itemId||'', shopUrl:s.shopUrl||'', lineAppUrl:s.lineAppUrl||'', kind:s.kind||'', thumb:thumbFinal, newestDate, oldestDate, saleDate:sd.saleDate||'', cumSales:sd.cumSales||0};
   });
 
   // 月リスト
@@ -891,6 +975,8 @@ function renderSalesGrid(){
   else if(sort==='count') filtered.sort((a,b)=>b.count-a.count);
   else if(sort==='newest') filtered.sort((a,b)=>(b.newestDate||'').localeCompare(a.newestDate||''));
   else if(sort==='oldest') filtered.sort((a,b)=>(a.oldestDate||'').localeCompare(b.oldestDate||''));
+  else if(sort==='saledate_new') filtered.sort((a,b)=>(b.saleDate||'').localeCompare(a.saleDate||''));
+  else if(sort==='saledate_old') filtered.sort((a,b)=>(a.saleDate||'').localeCompare(b.saleDate||''));
 
   document.getElementById('salesInfo').textContent=filtered.length+'件';
 
@@ -918,11 +1004,26 @@ function renderSalesGrid(){
     const shopBtn=shopUrl?`<button class="card-btn card-btn-shop" onclick="event.stopPropagation();window.open('${shopUrl}','_blank')">🌐 ショップ</button>`:'';
     const appBtn=appUrl?`<button class="card-btn card-btn-app" onclick="event.stopPropagation();window.open('${appUrl}','_blank')">📱 アプリ</button>`:'';
     const isTheme=item.category==='着せ替え';
-    const heatBar=salesHeatmapOn
-      ? (isTheme||shopListOrderMap[k]===undefined)
-        ? `<div class="sales-heat-bar" style="background:#ddd"></div>`
-        : `<div class="sales-heat-bar" style="background:${salesHeatColor(shopListOrderMap[k])}"></div>`
-      : '';
+    let heatBar;
+    if (isTheme) {
+      heatBar = `<div class="sales-heat-bar" style="background:#ddd"></div>`;
+    } else if (item.saleDate) {
+      // 販売日CSVあり：スライダー閾値で色分け
+      heatBar = `<div class="sales-heat-bar" style="background:${saleDateHeatColor(item.saleDate)}"></div>`;
+    } else if (salesHeatmapOn && shopListOrderMap[k] !== undefined) {
+      // 販売日CSVなし：ショップ順で色分け（従来通り）
+      heatBar = `<div class="sales-heat-bar" style="background:${salesHeatColor(shopListOrderMap[k])}"></div>`;
+    } else {
+      heatBar = `<div class="sales-heat-bar" style="background:#ddd"></div>`;
+    }
+    // 累計売上（国フィルターなし時のみ表示）
+    const noCountryFilter = !document.getElementById('countryFilter').value;
+    const cumDiff = item.cumSales - item.total;
+    const cumDiffStr = cumDiff >= 0 ? `(+${cumDiff.toLocaleString()})` : `(${cumDiff.toLocaleString()})`;
+    const cumLine = (item.cumSales > 0 && noCountryFilter)
+      ? `<div class="sales-amount" style="color:#e67e22;font-size:14px;">累計 ¥${item.cumSales.toLocaleString()} <span style="font-size:11px;">${cumDiffStr}</span></div>` : '';
+    const saleDateLine = item.saleDate
+      ? `<div class="sales-meta" style="color:#999">📅 ${item.saleDate}</div>` : '';
     return `<div class="sales-card ${isSel?'selected':''}" onclick="toggleSalesSelect('${k}','${shopUrl}','${appUrl}')">
       ${isSel?'<div class="sales-check">✓</div>':''}
       <div class="sales-rank">${idx+1}</div>
@@ -931,6 +1032,7 @@ function renderSalesGrid(){
         <div class="sales-title">${item.title}</div>
         <div class="sales-amount">¥${item.total.toLocaleString()}</div>
         <div class="sales-meta">${item.category}　${item.count}件${item.kind?' '+kindLabel(item.kind):''}</div>
+        ${saleDateLine}${cumLine}
       </div>
       ${(shopBtn||appBtn)?`<div class="card-buttons">${shopBtn}${appBtn}</div>`:''}
       ${heatBar}
@@ -944,16 +1046,12 @@ let shopListOrderMap={};
 let heatThreshold=0.5;
 
 function onHeatSliderChange(val){
-  heatThreshold=val/100;
-  document.getElementById('heatSliderVal').textContent=val+'%';
+  heatThreshold = val/100;
+  document.getElementById('heatSliderVal').textContent = val+'%';
   renderSalesGrid();
-} // key: sKey → 順位(0=新しい, 1=古い)
+}
 
 function buildShopOrderMap(){
-  // ショップリストCSVの順番（着せ替え除外）でインデックスを作成
-  // shopMapはsKey→{shopUrl,...}で格納済み
-  // allStickersは使えないのでshopMap構築時の順序を別途保持する必要がある
-  // shopListOrder配列を使う
   shopListOrderMap={};
   const total=shopListOrder.filter(k=>!k.includes('着せ替え')).length;
   let rank=0;
@@ -965,24 +1063,53 @@ function buildShopOrderMap(){
 }
 
 function salesHeatColor(ratio){
-  // thresholdより新しい→赤系、古い→青系、境界付近でグラデーション
   const t=heatThreshold;
   if(ratio<=t){
-    // 0→赤(0°) t→オレンジ(30°)
     const r=ratio/t;
     const hue=Math.round(r*30);
     return `hsl(${hue},90%,50%)`;
   } else {
-    // t→黄緑(80°) 1→青(220°)
     const r=(ratio-t)/(1-t);
     const hue=Math.round(80+r*140);
     return `hsl(${hue},70%,45%)`;
   }
 }
+
 let chartTab='amount', chartGran='day', chartInstance=null;
 const CAT_COLORS={'スタンプ':'#82d882','絵文字':'#06C755','着せ替え':'#1a6e3c'};
 
-// ===== 月次累積グラフ =====
+// スライダー値（0=最新=赤, 1=最古=青）ベースのヒートカラー
+// 販売日CSVがある場合は絶対スケール、ない場合はshopListOrder順
+function saleDateHeatColor(saleDate) {
+  if (!saleDate) return '#ddd';
+  const dates = Object.values(saleDateMap).map(d=>d.saleDate).filter(Boolean).sort();
+  if (dates.length < 2) return '#ddd';
+  const oldest = new Date(dates[0]);
+  const newest = new Date(dates[dates.length-1]);
+  const sale   = new Date(saleDate);
+  const total  = (newest - oldest) / 86400000 || 1;
+  const diff   = (sale - oldest) / 86400000;
+  // ratio: 0=最古, 1=最新
+  const ratio  = Math.max(0, Math.min(diff / total, 1));
+  // スライダー閾値で色を調整（threshold以上が「新しい=赤系」）
+  const t = heatThreshold;
+  if (ratio >= t) {
+    // 新しい側：黄→赤
+    const r = (ratio - t) / (1 - t || 0.001);
+    const hue = Math.round(60 - r * 60);
+    return `hsl(${hue},95%,48%)`;
+  } else {
+    // 古い側：青→黄
+    const r = ratio / (t || 0.001);
+    const hue = Math.round(220 - r * 160);
+    return `hsl(${hue},85%,48%)`;
+  }
+}
+
+function saleDateOldest() {
+  const dates = Object.values(saleDateMap).map(d=>d.saleDate).filter(Boolean).sort();
+  return dates[0] || '';
+}
 let cumulativeChartInstance = null;
 
 function buildCumulativeMonthList() {
@@ -1009,9 +1136,8 @@ function renderCumulativeChart() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const isCurrentMonth = month === todayStr.slice(0,7);
-  const lastDataDay = isCurrentMonth ? today.getDate() : daysInMonth;
 
-  // 月内の日別売上集計
+  // 月内の日別売上集計（先に構築）
   const dayTotals = {};
   rawSales.forEach(r => {
     const d = (r['日付']||'').replace(/\//g,'-');
@@ -1020,6 +1146,11 @@ function renderCumulativeChart() {
     const amt = parseInt((r['売上']||'0').replace(/[^\d]/g,''))||0;
     dayTotals[day] = (dayTotals[day]||0) + amt;
   });
+
+  // 実データの最終日を取得（CSVに存在するデータがある最後の日）
+  const actualDays = Object.keys(dayTotals).map(Number).sort((a,b)=>a-b);
+  const lastActualDay = actualDays.length ? actualDays[actualDays.length-1] : 0;
+  const lastDataDay = isCurrentMonth ? lastActualDay : daysInMonth;
 
   // 累積計算
   const labels = Array.from({length:daysInMonth},(_,i)=>`${m}/${i+1}`);
@@ -1398,12 +1529,22 @@ function reloadFile(file, type){
   }, 200);
 }
 
+document.getElementById('saleDateFileInput').addEventListener('change',e=>{if(e.target.files[0])readSaleDateFile(e.target.files[0]);});
+
 document.getElementById('reloadSalesInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'sales');});
 document.getElementById('reloadMasterInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'master');});
 document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'shop');});
 
+document.getElementById('reloadSaleDateInput').addEventListener('change',e=>{
+  if(e.target.files[0]){
+    readSaleDateFile(e.target.files[0]);
+    document.getElementById('reloadSaleDateLabel').textContent='✅ 読み込み完了';
+    document.getElementById('reloadSaleDateBox').style.borderColor='#06C755';
+  }
+});
+
 // リロードパネルのドラッグ＆ドロップ
-[['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop']].forEach(([boxId,type])=>{
+[['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop'],['reloadSaleDateBox','saledate']].forEach(([boxId,type])=>{
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
   box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';box.style.background='white';});
@@ -1411,12 +1552,21 @@ document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.ta
     e.preventDefault();e.stopPropagation();
     box.style.borderColor='';box.style.background='white';
     const f=e.dataTransfer.files[0];
-    if(f&&f.name.endsWith('.csv')) reloadFile(f,type);
+    if(f&&f.name.endsWith('.csv')){
+      if(type==='saledate'){
+        readSaleDateFile(f);
+        document.getElementById('reloadSaleDateLabel').textContent='✅ 読み込み完了';
+        box.style.borderColor='#06C755';
+      } else {
+        reloadFile(f,type);
+      }
+    }
   });
 });
 
 function resetSales(){
   rawSales=[];masterMap={};shopMap={};salesData=[];salesSelected=new Map();shopListOrder=[];
+  saleDateMap={}; saleDateIdMap={}; heatBorderDate='';
   salesHeatmapOn=true; heatThreshold=0.5;
   const slider=document.getElementById('heatSlider');
   if(slider) slider.value=50;
@@ -1424,12 +1574,13 @@ function resetSales(){
   if(sliderVal) sliderVal.textContent='50%';
   salesLoaded={sales:false,master:false,shop:false};
   document.getElementById('salesOutputPanel').classList.remove('visible');
-  ['salesFileInput','masterFileInput','shopFileInput'].forEach(id=>document.getElementById(id).value='');
-  ['salesBox','masterBox','shopBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  ['salesFileInput','masterFileInput','shopFileInput','saleDateFileInput'].forEach(id=>document.getElementById(id).value='');
+  ['salesBox','masterBox','shopBox','saleDateBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
   document.getElementById('salesBoxTitle').textContent='売上CSV';
   document.getElementById('masterBoxTitle').textContent='マスターリストCSV';
   document.getElementById('shopBoxTitle').textContent='ショップリストCSV';
-  ['salesBoxTitle','masterBoxTitle','shopBoxTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  document.getElementById('saleDateBoxTitle').innerHTML='販売日CSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span>';
+  ['salesBoxTitle','masterBoxTitle','shopBoxTitle','saleDateBoxTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
   document.getElementById('salesMainArea').style.display='none';
   document.getElementById('salesUploadArea').style.display='flex';
   document.getElementById('salesStartBtn').style.display='none';
@@ -1568,7 +1719,9 @@ function buildOfficialData() {
       thumb,
       shopUrl:    shop.shopUrl    || '',
       lineAppUrl: shop.lineAppUrl || '',
-      kind:       shop.kind       || ''
+      kind:       shop.kind       || '',
+      saleDate:   (offSaleDateMap[item.id] || offSaleDateMap[sKey(jaTitle,cat)] || {}).saleDate || '',
+      cumSales:   (offSaleDateMap[item.id] || offSaleDateMap[sKey(jaTitle,cat)] || {}).cumSales || 0,
     };
   });
 
@@ -1687,6 +1840,8 @@ function renderOfficialGrid() {
   if (sort==='revenue') filtered.sort((a,b)=>b.total_revPost-a.total_revPost);
   else if (sort==='sales') filtered.sort((a,b)=>b.total_sales-a.total_sales);
   else if (sort==='count') filtered.sort((a,b)=>b.total_count-a.total_count);
+  else if (sort==='saledate_new') filtered.sort((a,b)=>(b.saleDate||'').localeCompare(a.saleDate||''));
+  else if (sort==='saledate_old') filtered.sort((a,b)=>(a.saleDate||'').localeCompare(b.saleDate||''));
 
   updateOfficialSummary(filtered);
   document.getElementById('officialInfo').textContent = filtered.length+'件';
@@ -1709,10 +1864,24 @@ function renderOfficialGrid() {
     const isSel      = offSelected.has(cardKey);
     const shopKey    = sKey(item.jaTitle || item.title, item.cat);
     const isTheme    = item.type === 'Theme';
-    const heatRatio  = offShopListOrderMap[shopKey];
-    const heatBar    = isTheme || heatRatio === undefined
-      ? `<div class="sales-heat-bar" style="background:#ddd"></div>`
-      : `<div class="sales-heat-bar" style="background:${offHeatColor(heatRatio)}"></div>`;
+    // ヒートバー：販売日CSVがあれば最古=青・最新=赤、なければ旧ロジック
+    let heatBar;
+    if (!isTheme && item.saleDate) {
+      heatBar = `<div class="sales-heat-bar" style="background:${offSaleDateHeatColor(item.saleDate)}"></div>`;
+    } else {
+      const heatRatio = offShopListOrderMap[shopKey];
+      heatBar = (isTheme || heatRatio === undefined)
+        ? `<div class="sales-heat-bar" style="background:#ddd"></div>`
+        : `<div class="sales-heat-bar" style="background:${offHeatColor(heatRatio)}"></div>`;
+    }
+    // 販売日・累計売上
+    const offSaleDateLine = item.saleDate
+      ? `<div class="sales-meta" style="color:#999">📅 ${item.saleDate}</div>` : '';
+    const offRevPost = Math.round(item.total_revPost);
+    const offCumDiff = item.cumSales - offRevPost;
+    const offCumDiffStr = offCumDiff >= 0 ? `(+${offCumDiff.toLocaleString()})` : `(${offCumDiff.toLocaleString()})`;
+    const offCumLine = (item.cumSales > 0 && !document.getElementById('officialCountryFilter').value)
+      ? `<div class="sales-amount" style="color:#e67e22;font-size:14px;">累計 ¥${item.cumSales.toLocaleString()} <span style="font-size:11px;">${offCumDiffStr}</span></div>` : '';
     return `<div class="sales-card off-card${isSel?' selected':''}" data-id="${cardKey}" onclick="toggleOffCard('${cardKey}','${item.shopUrl}','${item.lineAppUrl}')">
       <div class="sales-rank">${idx+1}</div>
       <div class="sales-check" style="display:${isSel?'block':'none'}">✓</div>
@@ -1727,6 +1896,7 @@ function renderOfficialGrid() {
         <div class="sales-amount">¥${Math.round(item.total_revPost).toLocaleString()}</div>
         <div class="sales-meta">税前 ¥${Math.round(item.total_revPre).toLocaleString()}　${item.shareRate}%　${item.total_count}件</div>
         ${premLine}
+        ${offSaleDateLine}${offCumLine}
       </div>
       ${(shopBtn||appBtn)?`<div class="card-buttons">${shopBtn}${appBtn}</div>`:''}
       ${heatBar}
@@ -2102,16 +2272,17 @@ function saveOffChartImage(){
 
 function resetOfficial() {
   officialRaw=[]; officialData=[]; offMasterMap={}; offShopMap={};
-  offShopListOrder=[]; offShopListOrderMap={};
+  offShopListOrder=[]; offShopListOrderMap=[]; offSaleDateMap={};
+  ['offOfficialBox','offMasterBox','offShopBox','offSaleDateBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  document.getElementById('offOfficialTitle').textContent='公式CSV';
+  document.getElementById('offMasterTitle').textContent='マスターリストCSV';
+  document.getElementById('offShopTitle').textContent='ショップリストCSV';
+  document.getElementById('offSaleDateTitle').innerHTML='販売日CSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span>';
   offLoaded={official:false,master:false,shop:false};
   if(offChartInstance){offChartInstance.destroy();offChartInstance=null;}
   document.getElementById('offChartOverlay').classList.remove('visible');
   ['offOfficialInput','offMasterInput','offShopInput'].forEach(id=>document.getElementById(id).value='');
-  ['offOfficialBox','offMasterBox','offShopBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
-  document.getElementById('offOfficialTitle').textContent='公式CSV';
-  document.getElementById('offMasterTitle').textContent='マスターリストCSV';
-  document.getElementById('offShopTitle').textContent='ショップリストCSV';
-  ['offOfficialTitle','offMasterTitle','offShopTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  ['offOfficialTitle','offMasterTitle','offShopTitle','offSaleDateTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
   document.getElementById('officialMainArea').style.display='none';
   document.getElementById('officialUploadArea').style.display='flex';
   document.getElementById('offStartBtn').style.display='none';
@@ -2136,11 +2307,67 @@ let offHeatmapOn = true;
 let offHeatThreshold = 0.5;
 let offShopListOrder = [];
 let offShopListOrderMap = {};
+let offSaleDateMap = {}; // key: itemId → {saleDate, cumSales, thumbUrl}
 
 function onOffHeatSliderChange(val) {
   offHeatThreshold = val / 100;
   document.getElementById('offHeatSliderVal').textContent = val + '%';
   renderOfficialGrid();
+}
+
+// 公式CSV用ヒートカラー（スライダーベース）
+function offSaleDateHeatColor(saleDate) {
+  if (!saleDate) return '#ddd';
+  const dates = Object.values(offSaleDateMap).map(d=>d.saleDate).filter(Boolean).sort();
+  if (dates.length < 2) return '#ddd';
+  const oldest = new Date(dates[0]);
+  const newest = new Date(dates[dates.length-1]);
+  const sale   = new Date(saleDate);
+  const total  = (newest - oldest) / 86400000 || 1;
+  const diff   = (sale - oldest) / 86400000;
+  const ratio  = Math.max(0, Math.min(diff / total, 1));
+  const t = offHeatThreshold;
+  if (ratio >= t) {
+    const r = (ratio - t) / (1 - t || 0.001);
+    const hue = Math.round(60 - r * 60);
+    return `hsl(${hue},95%,48%)`;
+  } else {
+    const r = ratio / (t || 0.001);
+    const hue = Math.round(220 - r * 160);
+    return `hsl(${hue},85%,48%)`;
+  }
+}
+
+function readOffSaleDateFile(file) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const rows = parseCSV(ev.target.result);
+    if (!rows.length) { alert('CSVにデータがありません。'); return; }
+    const cols = Object.keys(rows[0]);
+    if (!cols.includes('販売開始日') || !cols.includes('タイトル')) {
+      alert('販売日CSVが正しくありません。');
+      return;
+    }
+    offSaleDateMap = {};
+    rows.forEach(r => {
+      const itemId  = r['アイテムID'] || '';
+      const title   = r['タイトル']   || '';
+      const cat     = r['カテゴリ']   || '';
+      const saleDate = normalizeDate(r['販売開始日']||'');
+      const cumSales = parseInt((r['売上（累計）']||'0').replace(/[^\d]/g,''))||0;
+      const thumbUrl = r['サムネイルURL'] || '';
+      const data = { saleDate, cumSales, thumbUrl, title, cat };
+      if (itemId) offSaleDateMap[itemId] = data;
+      // タイトル×カテゴリでも引けるように
+      offSaleDateMap[sKey(title,cat)] = data;
+    });
+    setOffBox('offSaleDateBox','offSaleDateTitle',`✅ 販売日CSV（${rows.length}件）`);
+    // 既にofficialDataがあれば再ビルド
+    if (officialData.length) {
+      buildOfficialData();
+    }
+  };
+  r.readAsText(file, 'UTF-8');
 }
 
 function offHeatColor(ratio) {
@@ -2214,6 +2441,14 @@ function copyOffUrls(type, doCopy=true) {
 }
 document.getElementById('offMasterInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'master');});
 document.getElementById('offShopInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'shop');});
+document.getElementById('offSaleDateInput').addEventListener('change',e=>{if(e.target.files[0])readOffSaleDateFile(e.target.files[0]);});
+document.getElementById('offReloadSaleDateInput').addEventListener('change',e=>{
+  if(e.target.files[0]){
+    readOffSaleDateFile(e.target.files[0]);
+    document.getElementById('offReloadSaleDateLabel').textContent='✅ 読み込み完了';
+    document.getElementById('offReloadSaleDateBox').style.borderColor='#06C755';
+  }
+});
 
 // イベントリスナー（リロードパネル）
 document.getElementById('offReloadOfficialInput').addEventListener('change',e=>{
@@ -2242,24 +2477,26 @@ document.getElementById('offReloadShopInput').addEventListener('change',e=>{
 });
 
 // ドラッグ&ドロップ（初期アップロード）
-[['offOfficialBox','official'],['offMasterBox','master'],['offShopBox','shop']].forEach(([boxId,type])=>{
+[['offOfficialBox','official'],['offMasterBox','master'],['offShopBox','shop'],['offSaleDateBox','saledate']].forEach(([boxId,type])=>{
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
   box.addEventListener('dragleave',e=>{e.stopPropagation();if(!box.classList.contains('loaded')){box.style.borderColor='';box.style.background='';}});
   box.addEventListener('drop',e=>{
     e.preventDefault();e.stopPropagation();box.style.borderColor='';box.style.background='';
     const f=e.dataTransfer.files[0];
-    if(f&&f.name.endsWith('.csv')) readOfficialFile(f,type);
+    if(f&&f.name.endsWith('.csv')){
+      if(type==='saledate') readOffSaleDateFile(f);
+      else readOfficialFile(f,type);
+    }
   });
 });
 
 // ドラッグ&ドロップ（リロードパネル）
-[['offReloadOfficialBox','official','offReloadOfficialLabel'],['offReloadMasterBox','master','offReloadMasterLabel'],['offReloadShopBox','shop','offReloadShopLabel']].forEach(([boxId,type,labelId])=>{
+[['offReloadOfficialBox','official','offReloadOfficialLabel'],['offReloadMasterBox','master','offReloadMasterLabel'],['offReloadShopBox','shop','offReloadShopLabel'],['offReloadSaleDateBox','saledate','offReloadSaleDateLabel']].forEach(([boxId,type,labelId])=>{
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
   box.addEventListener('dragleave',e=>{
     e.stopPropagation();
-    // 読み込み完了済みなら緑を維持
     if(document.getElementById(labelId).textContent.includes('完了')){return;}
     box.style.borderColor='';box.style.background='white';
   });
@@ -2267,7 +2504,8 @@ document.getElementById('offReloadShopInput').addEventListener('change',e=>{
     e.preventDefault();e.stopPropagation();
     const f=e.dataTransfer.files[0];
     if(f&&f.name.endsWith('.csv')){
-      readOfficialFile(f,type);
+      if(type==='saledate') readOffSaleDateFile(f);
+      else readOfficialFile(f,type);
       document.getElementById(labelId).textContent='✅ 読み込み完了';
       box.style.borderColor='#06C755';
       box.style.background='#f0fff4';
