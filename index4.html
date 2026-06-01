@@ -351,10 +351,12 @@ function readFile(file, type) {
       }
       salesAgg = {};
       rows.forEach(r => {
-        const t = r['タイトル']||'';
-        if (!salesAgg[t]) salesAgg[t] = { total: 0, count: 0 };
-        salesAgg[t].total += parseYen(r['売上']||'0');
-        salesAgg[t].count++;
+        const title = r['タイトル']||'';
+        const cat   = r['カテゴリ']||'';
+        const key   = cat ? `${title}__${cat}` : title;
+        if (!salesAgg[key]) salesAgg[key] = { total: 0, count: 0 };
+        salesAgg[key].total += parseYen(r['売上']||'0');
+        salesAgg[key].count++;
       });
       loaded.sales = true;
       setBox('box_sales','title_sales',`✅ 売上CSV（${rows.length}件）`);
@@ -423,7 +425,9 @@ function buildData() {
   allItems = saleDateData.map(item => {
     const shopKey = item.cat ? `${item.title}__${item.cat}` : item.title;
     const shop    = shopData[shopKey]      || {};
-    const sales   = salesAgg[item.title]   || { total: 0, count: 0 };
+    const salesKey = item.cat ? `${item.title}__${item.cat}` : item.title;
+    // カテゴリなしCSVの場合はタイトルのみキーでも検索
+    const sales   = salesAgg[salesKey] || salesAgg[item.title] || { total: 0, count: 0 };
     const official= officialAgg[item.itemId] || { revPost: 0, revPre: 0 };
     const thumbUrl = getThumbnail(shop.shopUrl, shop.imageUrl, item.cat, item.itemId, item.thumbUrl);
     return {
