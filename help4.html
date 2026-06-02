@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ヘルプ | LINEスタンプ 全作品ビューア</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #f0f4f8;
+    color: #1a1a2e;
+    line-height: 1.8;
+  }
+
+  .header {
+    background: #06C755;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(6,199,85,0.3);
+  }
+  .header h1 { font-size: 18px; font-weight: 900; }
+  .header-badge {
+    background: white;
+    color: #06C755;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .back-btn {
+    margin-left: auto;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    text-decoration: none;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.35); }
+
+  .container {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  .section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 900;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #06C755;
+  }
+  .section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin: 18px 0 8px;
+  }
+  .section p { font-size: 14px; color: #444; margin-bottom: 10px; }
+  .section ul { padding-left: 20px; font-size: 14px; color: #444; }
+  .section ul li { margin-bottom: 6px; }
+
+  .prereq-banner {
+    background: #fff8e1;
+    border: 2px solid #f39c12;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .prereq-banner h2 { font-size: 15px; font-weight: 900; color: #e67e22; margin-bottom: 10px; }
+  .prereq-banner p  { font-size: 14px; color: #555; }
+  .prereq-banner a  { color: #e67e22; font-weight: 700; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .feature-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .feature-card .icon { font-size: 28px; margin-bottom: 8px; }
+  .feature-card .name { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 4px; }
+  .feature-card .desc { font-size: 11px; color: #777; line-height: 1.6; }
+
+  .steps { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .step-num {
+    background: #06C755;
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-body { font-size: 14px; color: #444; line-height: 1.7; }
+
+  .csv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  .csv-table th {
+    background: #f0f4f8;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 700;
+    border: 1px solid #e0e0e0;
+  }
+  .csv-table td {
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    color: #444;
+  }
+
+  .required { background: #06C755; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .optional { background: #f39c12; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+
+  .note-box {
+    background: #fff3cd;
+    border-left: 4px solid #f39c12;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #666;
+    margin-top: 14px;
+  }
+  .tip-box {
+    background: #e8f8f0;
+    border-left: 4px solid #06C755;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #555;
+    margin-top: 14px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: #999;
+  }
+  footer a { color: #06C755; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>📅</span>
+  <h1>LINEスタンプ 全作品ビューア</h1>
+  <span class="header-badge">ヘルプ</span>
+  <a href="index4.html" class="back-btn">← アプリに戻る</a>
+</div>
+
+<div class="container">
+
+  <!-- 前提 -->
+  <div class="prereq-banner">
+    <h2>⚠️ 前提となるツールについて</h2>
+    <p>
+      本アプリは <strong>「LINE販売日スキャナー」</strong> と組み合わせて使うことを前提としています。<br>
+      販売日CSVがあれば売上ゼロの作品を含む全作品が表示されます。<br>
+      まだお持ちでない方は、先に以下の記事をご確認ください。<br><br>
+      👉 <a href="https://note.com/rorosuke/n/nbdbf00120b5a" target="_blank">LINE販売日スキャナーの記事</a>
+    </p>
+  </div>
+
+  <!-- 概要 -->
+  <div class="section">
+    <div class="section-title">📌 LINEスタンプ 全作品ビューアとは</div>
+    <p>「LINEスタンプピッカーPro」の姉妹ツールです。販売日CSVをベースにすることで、<strong>売上ゼロの作品を含む全作品</strong>を一覧表示できます。</p>
+    <div class="feature-grid" style="margin-top:14px">
+      <div class="feature-card">
+        <div class="icon">📅</div>
+        <div class="name">全作品一覧</div>
+        <div class="desc">売上ゼロの作品も含めて全件表示。棚卸しに使えます</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <div class="name">売上比較</div>
+        <div class="desc">当期売上・累計・分配金を横並びで比較できます</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📈</div>
+        <div class="name">グラフ機能</div>
+        <div class="desc">公開ペース・ランキング・ゼロ率など5種類のグラフ</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌈</div>
+        <div class="name">ヒートマップ</div>
+        <div class="desc">新しい作品は赤、古い作品は青で色分け表示</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSVファイルの説明 -->
+  <div class="section">
+    <div class="section-title">📌 使用するCSVファイル</div>
+    <p>本アプリで使用するCSVは4種類です。販売日CSVのみ必須で、他は任意です。</p>
+
+    <h3>▶️ 販売日CSV <span class="required">必須</span></h3>
+    <p>LINE販売日スキャナーで出力したCSVです。全作品のベースデータとして使います。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td></tr>
+      <tr><td>アイテムID</td><td>作品のID</td></tr>
+      <tr><td>タイトル</td><td>作品タイトル</td></tr>
+      <tr><td>販売開始日</td><td>販売開始日（YYYY/M/D形式）</td></tr>
+      <tr><td>売上（累計）</td><td>販売開始からの累計売上（速報値）</td></tr>
+      <tr><td>サムネイルURL</td><td>サムネイル画像URL</td></tr>
+    </table>
+    <div class="note-box">⚠️ 絵文字のサムネイルはショップCSVが必要です。アニメーション絵文字はサムネイルを表示できません。</div>
+
+    <h3>▶️ 売上CSV <span class="optional">任意</span></h3>
+    <p>LINE売上スキャナー（高機能版）の国別または全エリアスキャンで出力したCSVです。読み込むと当期売上と累計との差額が表示されます。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>日付</td><td>売上が発生した日</td></tr>
+      <tr><td>タイトル</td><td>作品タイトル</td></tr>
+      <tr><td>売上</td><td>売上金額（￥形式）</td></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td></tr>
+      <tr><td>国</td><td>販売国（ない場合は全エリアとして処理）</td></tr>
+    </table>
+
+    <h3>▶️ ショップCSV <span class="optional">任意</span></h3>
+    <p>LINEショップスキャナーで出力したCSVです。読み込むとサムネイル・ショップURL・アプリURLが表示されます。絵文字のサムネイル表示にも必要です。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>タイトル</td><td>作品タイトル</td></tr>
+      <tr><td>カテゴリ</td><td>スタンプ・絵文字・着せ替え</td></tr>
+      <tr><td>ショップURL</td><td>LINEストアの購入ページURL</td></tr>
+      <tr><td>LINEアプリURL</td><td>LINEアプリで開くURL</td></tr>
+      <tr><td>画像URL</td><td>サムネイル画像URL</td></tr>
+    </table>
+
+    <h3>▶️ 公式CSV <span class="optional">任意</span></h3>
+    <p>LINE Creators Marketからダウンロードできる月次売上明細CSV（return-XXXXXX-YYYYMM.csv）です。読み込むと分配金が表示されます。</p>
+    <table class="csv-table">
+      <tr><th>列名</th><th>内容</th></tr>
+      <tr><td>Item ID</td><td>作品ID</td></tr>
+      <tr><td>Item Title</td><td>作品タイトル（英語）</td></tr>
+      <tr><td>Revenue Share</td><td>分配金（税後）</td></tr>
+      <tr><td>Country of Sale</td><td>販売国（Premiumはプレミアム分配）</td></tr>
+    </table>
+    <div class="tip-box">💡 複数月分の公式CSVを1ファイルにまとめて読み込むと、分配金が全月分合算されます。</div>
+  </div>
+
+  <!-- 使い方 -->
+  <div class="section">
+    <div class="section-title">📌 基本の使い方</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>CSVをアップロード</strong><br>販売日CSVは必須です。他のCSVは任意で追加できます。読み込むほど表示される情報が増えます。各ボックスにドラッグ＆ドロップするか、クリックして選択してください。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>「▶ 表示を開始」を押す</strong><br>販売日CSVを読み込むとボタンが表示されます。他のCSVも揃えてからボタンを押してください。</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>フィルターと並び替えで絞り込む</strong><br>カテゴリ・売上ゼロ・販売日範囲・ソートを組み合わせて分析できます。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- コントロールの説明 -->
+  <div class="section">
+    <div class="section-title">📌 コントロールの説明</div>
+
+    <h3>▶️ カテゴリフィルター</h3>
+    <p>スタンプ・絵文字・着せ替えで絞り込めます。</p>
+
+    <h3>▶️ 売上フィルター</h3>
+    <ul>
+      <li><strong>売上ゼロ含む</strong>：全作品を表示（デフォルト）</li>
+      <li><strong>売上あり</strong>：累計または当期売上が1円以上の作品のみ</li>
+      <li><strong>売上ゼロのみ</strong>：一度も売れていない作品のみ</li>
+    </ul>
+
+    <h3>▶️ 並び替え</h3>
+    <ul>
+      <li><strong>販売日：新しい順／古い順</strong>：販売開始日でソート</li>
+      <li><strong>累計売上：高い順／低い順</strong>：累計売上でソート</li>
+      <li><strong>当期売上：高い順／低い順</strong>：当期売上でソート（売上CSV必要）</li>
+    </ul>
+
+    <h3>▶️ 販売日フィルター</h3>
+    <p>開始日〜終了日を指定すると、その期間に販売開始した作品だけが表示されます。</p>
+
+    <h3>▶️ ヒートマップスライダー（新↔古）</h3>
+    <p>各カード下部の色帯で新旧を視覚的に表示します。</p>
+    <ul style="margin-top:8px">
+      <li>🔴 <strong>赤〜オレンジ</strong>：新しい作品</li>
+      <li>🔵 <strong>青〜緑</strong>：古い作品</li>
+      <li>⬜ <strong>グレー</strong>：着せ替え（対象外）</li>
+    </ul>
+    <p style="margin-top:8px">スライダーで新旧の境界位置を調整できます。販売日CSVがない場合は全て灰色になります。</p>
+    <div class="tip-box">💡 累計売上順で並べたとき、赤い（新しい）作品が上位にあれば「新作が売れている」、青い（古い）作品が上位にあれば「ロングセラーがある」と読み取れます。</div>
+
+    <h3>▶️ 🔁 ファイル入替</h3>
+    <p>表示中に個別のCSVを差し替えられます。月が変わったときに売上CSVや公式CSVだけ新しいものに入れ替える使い方が便利です。ドラッグ＆ドロップにも対応しています。</p>
+  </div>
+
+  <!-- サマリーバー -->
+  <div class="section">
+    <div class="section-title">📌 サマリーバー</div>
+    <p>フィルター条件に連動してリアルタイムで更新されます。</p>
+    <table class="csv-table">
+      <tr><th>項目</th><th>内容</th><th>表示条件</th></tr>
+      <tr><td>全作品</td><td>表示中の作品件数</td><td>常時</td></tr>
+      <tr><td>売上あり</td><td>累計または当期売上が1円以上の件数</td><td>常時</td></tr>
+      <tr><td>売上ゼロ</td><td>一度も売れていない件数</td><td>常時</td></tr>
+      <tr><td>当期売上合計</td><td>売上CSVの合計金額</td><td>売上CSV読み込み時</td></tr>
+      <tr><td>累計合計</td><td>販売日CSV記載の累計売上合計</td><td>常時</td></tr>
+      <tr><td>差額</td><td>累計合計 - 当期売上合計</td><td>売上CSV読み込み時</td></tr>
+    </table>
+    <div class="note-box">⚠️ 累計売上は販売日スキャナーの速報値です。売上CSVの確定値と数円の誤差が生じる場合があります。</div>
+  </div>
+
+  <!-- グラフ機能 -->
+  <div class="section">
+    <div class="section-title">📌 グラフ機能</div>
+    <p>「📈 グラフ」ボタンを押すとグラフモーダルが開きます。現在のフィルター条件に連動しています。</p>
+    <table class="csv-table">
+      <tr><th>タブ</th><th>内容</th><th>必要なCSV</th></tr>
+      <tr><td>公開ペース</td><td>日・月・年ごとの公開件数（カテゴリ別色分け棒グラフ）</td><td>販売日のみ</td></tr>
+      <tr><td>カテゴリ別</td><td>スタンプ・絵文字・着せ替えの件数比率ドーナツグラフ</td><td>販売日のみ</td></tr>
+      <tr><td>累計ランキング</td><td>作品別累計売上の棒グラフ（全件）</td><td>販売日のみ</td></tr>
+      <tr><td>売上ゼロ率</td><td>カテゴリ別の売上あり・ゼロの内訳（ゼロ率をサマリーに表示）</td><td>販売日のみ</td></tr>
+      <tr><td>当期vs累計</td><td>当期売上と差額の積み上げ棒グラフ（上位20件）</td><td>販売日＋売上CSV</td></tr>
+    </table>
+    <div class="tip-box">💡 「公開ペース」グラフは日・月・年の粒度を切り替えられます。月粒度が最も使いやすいと思います。</div>
+  </div>
+
+  <!-- よくある質問 -->
+  <div class="section">
+    <div class="section-title">📌 よくある質問</div>
+
+    <h3>▶️ 絵文字のサムネイルが表示されない</h3>
+    <p>絵文字のサムネイルはショップCSVが必要です。LINEショップスキャナーで絵文字のデータを収集してからCSVを作成してください。アニメーション絵文字はスキャナー側でサムネイルURLが取得できないため、表示できません。</p>
+
+    <h3>▶️ 累計と当期売上の差額がマイナスになる</h3>
+    <p>販売日スキャナーの実行タイミングと売上CSVの実行タイミングにズレがある場合、直近の売上が販売日CSV側にまだ反映されていないことがあります。その場合は差額が0として表示されます。</p>
+
+    <h3>▶️ 「▶ 表示を開始」が出ない</h3>
+    <p>販売日CSVが正しく読み込まれた状態でないと表示されません。ボックスに「✅」が表示されているか確認してください。</p>
+
+    <h3>▶️ ローカルでも使えますか？</h3>
+    <p>HTMLファイルをダウンロードしてブラウザで開くだけで動作します。インターネット接続は不要です（グラフ機能のChart.jsはCDN経由のため接続が必要です）。</p>
+
+    <h3>▶️ LINEスタンプピッカーProとの違いは？</h3>
+    <p>ピッカーProは売れた記録をベースにした分析ツールです。全作品ビューアは販売日CSVをベースにしているため、売上ゼロの作品も含めた全作品の棚卸しができます。2つを使い分けることで全体像が把握できます。</p>
+  </div>
+
+</div>
+
+<footer>
+  LINEスタンプ 全作品ビューア｜<a href="https://note.com/rorosuke" target="_blank">ROROSUKE LABO</a>
+</footer>
+
+</body>
+</html>
