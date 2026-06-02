@@ -888,7 +888,12 @@ function renderChart() {
     const total = base.length;
     const totalZero = base.filter(i=>i.cumSales===0&&i.salesTotal===0).length;
     const zeroPct = total>0 ? Math.round(totalZero/total*100) : 0;
-    summary.textContent = `全${total}件中 売上ゼロ：${totalZero}件（${zeroPct}%）`;
+    const catStats = ['スタンプ','絵文字','着せ替え'].map((c,i)=>{
+      const all  = soldCounts[i]+zeroCounts[i];
+      const pct  = all>0 ? Math.round(zeroCounts[i]/all*100) : 0;
+      return `${c}：${pct}%`;
+    }).join('　');
+    summary.textContent = `全${total}件中 売上ゼロ：${totalZero}件（${zeroPct}%）　${catStats}`;
     const datasets = [
       { label:'売上ゼロ', data:zeroCounts, backgroundColor:'#ddd',    stack:'s' },
       { label:'売上あり', data:soldCounts, backgroundColor:'#06C755', stack:'s' },
