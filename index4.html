@@ -250,6 +250,7 @@
       <span style="color:#2980b9">古</span>
       <span id="heatSliderVal" style="font-weight:700;min-width:28px">50%</span>
     </div>
+    <button class="btn btn-blue" onclick="showCharts()">📈 グラフ</button>
     <button class="btn btn-gray" onclick="toggleReload()">🔁 ファイル入替</button>
     <button class="btn btn-gray" onclick="resetAll()">🔄 リセット</button>
     <div class="info-bar" id="infoBar">0件</div>
@@ -649,5 +650,305 @@ function toggleReload() {
   });
 });
 </script>
-</body>
-</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+.v4-chart-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.5); z-index:500;
+  align-items:center; justify-content:center;
+}
+.v4-chart-overlay.visible { display:flex; }
+.v4-chart-modal {
+  background:white; border-radius:16px; width:92%; max-width:900px;
+  max-height:90vh; overflow-y:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+  display:flex; flex-direction:column;
+}
+.v4-chart-header {
+  display:flex; flex-direction:column; gap:8px;
+  padding:12px 16px 8px; border-bottom:1px solid #e0e0e0;
+  position:sticky; top:0; background:white; z-index:1; border-radius:16px 16px 0 0;
+}
+.v4-chart-header-top { display:flex; align-items:center; gap:8px; }
+.v4-chart-header-top h2 { font-size:15px; font-weight:900; flex:none; }
+.v4-chart-header-bottom { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; overflow-x:auto; }
+.v4-tab {
+  padding:4px 10px; border-radius:20px; border:1px solid #ddd;
+  background:white; color:#555; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:'Noto Sans JP',sans-serif; transition:all 0.15s; white-space:nowrap;
+}
+.v4-tab.active { background:#06C755; color:white; border-color:#06C755; }
+.v4-gran-tab {
+  padding:4px 8px; border-radius:6px; border:1px solid #ddd;
+  background:white; color:#555; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:'Noto Sans JP',sans-serif; white-space:nowrap;
+}
+.v4-gran-tab.active { background:#06C755; color:white; border-color:#06C755; }
+.v4-chart-body { padding:16px 20px; }
+.v4-chart-summary {
+  font-size:13px; font-weight:700; color:#333; margin-bottom:10px;
+  padding:8px 12px; background:#f0f4f8; border-radius:8px;
+}
+</style>
+
+<div class="v4-chart-overlay" id="v4ChartOverlay" onclick="if(event.target===this)hideCharts()">
+  <div class="v4-chart-modal">
+    <div class="v4-chart-header">
+      <div class="v4-chart-header-top">
+        <h2>📈 グラフ</h2>
+        <div id="v4GranTabs" style="display:none;gap:3px;display:none">
+          <button class="v4-gran-tab active" onclick="switchGran('day')">日</button>
+          <button class="v4-gran-tab" onclick="switchGran('month')">月</button>
+          <button class="v4-gran-tab" onclick="switchGran('year')">年</button>
+        </div>
+        <button onclick="saveChart()" style="background:#4495C1;color:white;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;">💾 画像保存</button>
+        <button onclick="hideCharts()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:2px;">✕</button>
+      </div>
+      <div class="v4-chart-header-bottom">
+        <button class="v4-tab active" onclick="switchTab('release')">公開ペース</button>
+        <button class="v4-tab" onclick="switchTab('category')">カテゴリ別</button>
+        <button class="v4-tab" onclick="switchTab('ranking')">累計ランキング</button>
+        <button class="v4-tab" onclick="switchTab('zero')">売上ゼロ率</button>
+        <button class="v4-tab" onclick="switchTab('compare')">当期vs累計</button>
+      </div>
+    </div>
+    <div class="v4-chart-body">
+      <div class="v4-chart-summary" id="v4ChartSummary"></div>
+      <div style="position:relative;height:380px;"><canvas id="v4ChartCanvas"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== グラフ =====
+let v4ChartInstance = null;
+let v4Tab = 'release';
+let v4Gran = 'month';
+const CAT_COLOR = { 'スタンプ':'#4495C1', '絵文字':'#9B59B6', '着せ替え':'#27ae60' };
+
+function showCharts() {
+  document.getElementById('v4ChartOverlay').classList.add('visible');
+  renderChart();
+}
+function hideCharts() {
+  document.getElementById('v4ChartOverlay').classList.remove('visible');
+}
+
+function switchTab(tab) {
+  v4Tab = tab;
+  document.querySelectorAll('.v4-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['release','category','ranking','zero','compare'][i] === tab);
+  });
+  const granTabs = document.getElementById('v4GranTabs');
+  granTabs.style.display = tab === 'release' ? 'flex' : 'none';
+  renderChart();
+}
+
+function switchGran(gran) {
+  v4Gran = gran;
+  document.querySelectorAll('.v4-gran-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['day','month','year'][i] === gran);
+  });
+  renderChart();
+}
+
+function saveChart() {
+  const a = document.createElement('a');
+  a.download = `全作品ビューア_${v4Tab}.png`;
+  a.href = document.getElementById('v4ChartCanvas').toDataURL('image/png');
+  a.click();
+}
+
+function renderChart() {
+  if (v4ChartInstance) { v4ChartInstance.destroy(); v4ChartInstance = null; }
+  const canvas  = document.getElementById('v4ChartCanvas');
+  const summary = document.getElementById('v4ChartSummary');
+
+  // フィルター適用済みのデータを使う
+  const cat     = document.getElementById('catFilter').value;
+  const zero    = document.getElementById('zeroFilter').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+  let base = [...allItems];
+  if (cat)      base = base.filter(i => i.cat === cat);
+  if (dateFrom) base = base.filter(i => i.saleDate >= dateFrom);
+  if (dateTo)   base = base.filter(i => i.saleDate <= dateTo);
+  if (zero === 'nonzero') base = base.filter(i => i.cumSales > 0 || i.salesTotal > 0);
+  if (zero === 'zero')    base = base.filter(i => i.cumSales === 0 && i.salesTotal === 0);
+
+  if (v4Tab === 'release') {
+    // 公開ペース（日・月・年）- ゼロの日も含める
+    const agg = {};
+    base.forEach(item => {
+      if (!item.saleDate) return;
+      let key;
+      if (v4Gran === 'day')   key = item.saleDate;
+      if (v4Gran === 'month') key = item.saleDate.slice(0,7);
+      if (v4Gran === 'year')  key = item.saleDate.slice(0,4);
+      if (!agg[key]) agg[key] = { スタンプ:0, 絵文字:0, 着せ替え:0 };
+      agg[key][item.cat] = (agg[key][item.cat]||0) + 1;
+    });
+
+    // ゼロ日の補完（日・月粒度のみ）
+    const sortedKeys = Object.keys(agg).sort();
+    if (v4Gran === 'day' && sortedKeys.length >= 2) {
+      const cur = new Date(sortedKeys[0]);
+      const end = new Date(sortedKeys[sortedKeys.length-1]);
+      while (cur <= end) {
+        const k = cur.toISOString().slice(0,10);
+        if (!agg[k]) agg[k] = { スタンプ:0, 絵文字:0, 着せ替え:0 };
+        cur.setDate(cur.getDate()+1);
+      }
+    } else if (v4Gran === 'month' && sortedKeys.length >= 2) {
+      const [sy,sm] = sortedKeys[0].split('-').map(Number);
+      const [ey,em] = sortedKeys[sortedKeys.length-1].split('-').map(Number);
+      let y=sy, m=sm;
+      while (y<ey || (y===ey && m<=em)) {
+        const k = `${y}-${String(m).padStart(2,'0')}`;
+        if (!agg[k]) agg[k] = { スタンプ:0, 絵文字:0, 着せ替え:0 };
+        m++; if (m>12) { m=1; y++; }
+      }
+    }
+
+    const labels = Object.keys(agg).sort();
+    const total  = base.filter(i=>i.saleDate).length;
+    summary.textContent = `公開件数：${total}件　期間：${labels[0]||'-'} 〜 ${labels[labels.length-1]||'-'}`;
+    const datasets = ['スタンプ','絵文字','着せ替え'].map(cat => ({
+      label: cat,
+      data: labels.map(k => agg[k][cat]||0),
+      backgroundColor: CAT_COLOR[cat],
+      stack: 's'
+    })).filter(d => d.data.some(v=>v>0));
+    v4ChartInstance = new Chart(canvas, {
+      type: 'bar', data: { labels, datasets },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+          legend: { position:'top' },
+          tooltip: {
+            mode:'index', intersect:false,
+            callbacks: {
+              label(ctx){ const v=ctx.parsed.y; return v?` ${ctx.dataset.label}：${v}件`:null; },
+              afterBody(items){ const t=items.reduce((s,i)=>s+(i.parsed.y||0),0); return t?[`────────\n 合計：${t}件`]:[]; }
+            }
+          }
+        },
+        scales: {
+          x: { stacked:true, ticks:{ maxRotation:60, font:{size:9} } },
+          y: { stacked:true, beginAtZero:true, title:{ display:true, text:'件数' } }
+        }
+      }
+    });
+
+  } else if (v4Tab === 'category') {
+    // カテゴリ別（件数・累計売上のドーナツ）
+    const cats = ['スタンプ','絵文字','着せ替え'];
+    const counts = cats.map(c => base.filter(i=>i.cat===c).length);
+    const cums   = cats.map(c => base.filter(i=>i.cat===c).reduce((s,i)=>s+i.cumSales,0));
+    const total  = base.length;
+    const totalCum = base.reduce((s,i)=>s+i.cumSales,0);
+    summary.textContent = `全${total}件　累計合計：¥${totalCum.toLocaleString()}`;
+    const richLabels = cats.map((c,i) => {
+      const pct = total>0 ? Math.round(counts[i]/total*100) : 0;
+      return `${c}（${counts[i]}件・${pct}%）`;
+    });
+    v4ChartInstance = new Chart(canvas, {
+      type:'doughnut',
+      data:{ labels:richLabels, datasets:[{ data:counts, backgroundColor:cats.map(c=>CAT_COLOR[c]) }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+    });
+
+  } else if (v4Tab === 'ranking') {
+    // 累計ランキング（全件）
+    const sorted = [...base].sort((a,b)=>b.cumSales-a.cumSales).filter(i=>i.cumSales>0);
+    const labels = sorted.map(i=>{ const t=i.title; return t.length>14?t.slice(0,13)+'…':t; });
+    const data   = sorted.map(i=>i.cumSales);
+    const colors = sorted.map(i=>CAT_COLOR[i.cat]||'#ccc');
+    const total  = data.reduce((s,v)=>s+v,0);
+    summary.textContent = `累計合計：¥${total.toLocaleString()}　${sorted.length}件`;
+    v4ChartInstance = new Chart(canvas, {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'累計売上', data, backgroundColor:colors }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ maxRotation:60, font:{size:9} } },
+          y:{ beginAtZero:true, title:{ display:true, text:'累計売上（円）' } }
+        }
+      }
+    });
+
+  } else if (v4Tab === 'zero') {
+    // 売上ゼロ率（カテゴリ別）
+    const cats = ['スタンプ','絵文字','着せ替え'];
+    const soldCounts = cats.map(c => base.filter(i=>i.cat===c&&(i.cumSales>0||i.salesTotal>0)).length);
+    const zeroCounts = cats.map(c => base.filter(i=>i.cat===c&&i.cumSales===0&&i.salesTotal===0).length);
+    const total = base.length;
+    const totalZero = base.filter(i=>i.cumSales===0&&i.salesTotal===0).length;
+    const zeroPct = total>0 ? Math.round(totalZero/total*100) : 0;
+    summary.textContent = `全${total}件中 売上ゼロ：${totalZero}件（${zeroPct}%）`;
+    const datasets = [
+      { label:'売上ゼロ', data:zeroCounts, backgroundColor:'#ddd',    stack:'s' },
+      { label:'売上あり', data:soldCounts, backgroundColor:'#06C755', stack:'s' },
+    ];
+    const richLabels = cats.map((c,i)=>`${c}（${soldCounts[i]+zeroCounts[i]}件）`);
+    v4ChartInstance = new Chart(canvas, {
+      type:'bar', data:{ labels:richLabels, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top' },
+          tooltip:{ mode:'index', intersect:false }
+        },
+        scales:{
+          x:{ stacked:true },
+          y:{ stacked:true, beginAtZero:true, title:{ display:true, text:'件数' } }
+        }
+      }
+    });
+
+  } else if (v4Tab === 'compare') {
+    // 当期売上 vs 累計（上位20件）
+    if (!loaded.sales) {
+      summary.textContent = '売上CSVを読み込むと表示されます';
+      return;
+    }
+    const sorted = [...base].filter(i=>i.cumSales>0||i.salesTotal>0)
+      .sort((a,b)=>b.cumSales-a.cumSales).slice(0,20);
+    const labels  = sorted.map(i=>{ const t=i.title; return t.length>14?t.slice(0,13)+'…':t; });
+    const cumData  = sorted.map(i=>i.cumSales);
+    const salesData= sorted.map(i=>i.salesTotal);
+    const diffData = sorted.map(i=>Math.max(0, i.cumSales-i.salesTotal)); // 誤差でマイナスになる場合は0
+    summary.textContent = `上位${sorted.length}件　累計合計：¥${cumData.reduce((s,v)=>s+v,0).toLocaleString()}`;
+    v4ChartInstance = new Chart(canvas, {
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'当期売上', data:salesData, backgroundColor:'#4495C1', stack:'s' },
+        { label:'差額（累計-当期）', data:diffData, backgroundColor:'#e67e22', stack:'s' },
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top' },
+          tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label(ctx){ const v=ctx.parsed.y; return v?` ${ctx.dataset.label}：¥${v.toLocaleString()}`:null; },
+              afterBody(items){
+                const t=items.reduce((s,i)=>s+(i.parsed.y||0),0);
+                return [`────────\n 累計：¥${t.toLocaleString()}`];
+              }
+            }
+          }
+        },
+        scales:{
+          x:{ stacked:true, ticks:{ maxRotation:60, font:{size:9} } },
+          y:{ stacked:true, beginAtZero:true, title:{ display:true, text:'売上（円）' } }
+        }
+      }
+    });
+  }
+}
+</script>
