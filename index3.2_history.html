@@ -1059,6 +1059,21 @@ function renderSalesGrid(){
 }
 
 // ===== 履歴モーダル =====
+const COUNTRY_COLORS = {
+  '日本': '#ffffff',
+  '台湾': '#dbeafe',
+  'タイ': '#fde8e8',
+};
+
+function countryBgColor(country) {
+  if (COUNTRY_COLORS[country]) return COUNTRY_COLORS[country];
+  // ハッシュ自動生成（彩度低め・明度高め）
+  let hash = 0;
+  for (let i = 0; i < country.length; i++) hash = country.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue},35%,92%)`;
+}
+
 function showHistoryModal(k) {
   // rawSalesからこのスタンプの履歴を抽出（新しい順）
   const rows = rawSales
@@ -1079,12 +1094,15 @@ function showHistoryModal(k) {
     document.getElementById('historyModalBody').innerHTML =
       '<div style="text-align:center;color:#999;padding:24px;font-size:13px;">履歴データがありません</div>';
   } else {
-    const rows_html = rows.map(r => `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+    const rows_html = rows.map(r => {
+      const bg = countryBgColor(r.country);
+      return `
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid #f0f0f0;border-radius:6px;background:${bg};margin-bottom:2px;">
         <div style="font-size:12px;color:#555;min-width:90px;font-weight:700;">${r.date}</div>
         <div style="font-size:12px;color:#333;flex:1;">${r.country}</div>
         <div style="font-size:13px;font-weight:900;color:#06C755;">¥${r.amount.toLocaleString()}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     document.getElementById('historyModalBody').innerHTML = `
       <div style="font-size:11px;color:#999;margin-bottom:8px;">新しい順に表示しています</div>
       ${rows_html}`;
