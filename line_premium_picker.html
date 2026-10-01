@@ -230,18 +230,22 @@ function rebuild(){
       const p=parsePeriod(r['プレミアム期間']); if(!p) return;
       const id=r['ID'];
       const sa=sales[s.cat+'|'+id]; const sh=shop[s.cat+'|'+norm(r['タイトル'])]||(sa&&shop[s.cat+'|'+norm(sa['タイトル'])]);
-      if(!sa) noThumb++;
       if(!sh) miss.push(s.cat+'：'+r['タイトル']);
+      /* 販売日CSVのURLが公開CDNのものだけ採用。絵文字は管理画面URL等のため、ショップCSVの画像URLを使う */
+      const salesImg=(sa&&/^https:\/\/creators-market-all\.line-scdn\.net\//.test(sa['サムネイルURL']))?sa['サムネイルURL']:'';
+      const shopImg=(sh&&/^https?:\/\//.test(sh['画像URL']||''))?sh['画像URL']:'';
+      const thumb=salesImg||shopImg;
+      if(!thumb) noThumb++;
       items.push({uid:s.cat+'|'+id,cat:s.cat,id,title:r['タイトル'],state:p.state,month:p.month,
-        feature:r['特集企画']||'',thumb:sa?sa['サムネイルURL']:'',date:sa?dateNum(sa['販売開始日']):0,
+        feature:r['特集企画']||'',thumb:thumb,date:sa?dateNum(sa['販売開始日']):0,
         shopUrl:sh?sh['ショップURL']:'',appUrl:sh?sh['LINEアプリURL']:''});
     });
   });
   selected=selected.filter(u=>items.some(i=>i.uid===u));
   const w=[];
-  if(!raw.sales && items.length) w.push('販売日CSVが未読み込みのため、サムネイルは表示されません。');
-  if(!raw.shop && items.length) w.push('ショップCSVが未読み込みのため、リンクを作れません。');
-  if(raw.sales && noThumb) w.push('サムネイルが見つからない作品：'+noThumb+'件');
+  if(!raw.sales && items.length) w.push('販売日CSVが未読み込みです（スタンプのサムネイルと販売開始日の並び替えに使います）。');
+  if(!raw.shop && items.length) w.push('ショップCSVが未読み込みのため、リンクを作れません（絵文字のサムネイルも表示されません）。');
+  if(noThumb && raw.sales && raw.shop) w.push('サムネイルが見つからない作品：'+noThumb+'件');
   if(raw.shop && miss.length) w.push('ショップCSVに見つからない作品（選択できません）：'+miss.length+'件\n'+miss.slice(0,8).join('\n')+(miss.length>8?'\n…ほか'+(miss.length-8)+'件':''));
   warnText=w.join('\n');
   buildFilters(); render();
