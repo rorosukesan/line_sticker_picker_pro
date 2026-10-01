@@ -11,10 +11,11 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;line-height:1.5;padding-bottom:300px}
-header{background:var(--green);color:#fff;padding:14px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font-size:20px}
-header span{font-size:12px;opacity:.9}
-main{max-width:1200px;margin:0 auto;padding:16px}
+header{background:var(--green);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(6,199,85,.3)}
+header h1{margin:0;font-size:18px;font-weight:900}
+header .ver{font-size:11px;opacity:.85;border:1px solid rgba(255,255,255,.5);border-radius:10px;padding:1px 8px}
+header .hcount{margin-left:auto;background:#fff;color:var(--green);font-weight:700;font-size:13px;padding:4px 12px;border-radius:20px}
+main{padding:16px}
 section.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
 h2{font-size:14px;margin:0 0 10px;color:var(--sub)}
 .drops{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
@@ -46,7 +47,7 @@ input[type=search]{min-width:200px}
 .btn.primary:hover{background:var(--green-d)}
 .summary{font-size:13px;color:var(--sub);margin:4px 0 10px}
 .warn{background:#fffbeb;border:1px solid #fde68a;color:#92580a;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;white-space:pre-line}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
 .card{position:relative;background:var(--card);border:2px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
 .card:hover{border-color:#b7e4c7}
 .card.sel{border-color:var(--green);box-shadow:0 0 0 2px rgba(6,199,85,.25)}
@@ -66,7 +67,7 @@ input[type=search]{min-width:200px}
 .meta .nl{color:var(--red);font-size:11px}
 .empty{padding:40px;text-align:center;color:var(--sub)}
 #bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--green);box-shadow:0 -4px 16px rgba(0,0,0,.08);padding:10px 16px;z-index:10}
-#bar .inner{max-width:1200px;margin:0 auto}
+#bar .inner{margin:0}
 #bar .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
 #bar .count{font-weight:700;font-size:14px}
 #bar .count small{font-weight:400;color:var(--sub);margin-left:6px}
@@ -77,7 +78,7 @@ input[type=search]{min-width:200px}
 </style>
 </head>
 <body>
-<header><h1>🌟 LINEプレミアムピッカー</h1><span>プレミアム移行（予定）の作品を選んで、noteに貼るリンクを作ります</span></header>
+<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.3</span><div class="hcount" id="hcount">0件</div></header>
 <main>
 
 <section class="panel">
@@ -141,6 +142,13 @@ input[type=search]{min-width:200px}
 <script>
 (function(){
 'use strict';
+
+/* 画像の読み込み失敗：予備URLがあれば1度だけ試し、だめなら文字表示 */
+window.imgFail=function(img){
+  const alt=img.getAttribute('data-alt');
+  if(alt){ img.removeAttribute('data-alt'); img.src=alt; return; }
+  img.onerror=null; img.outerHTML='<span class="noimg">画像を読み込めません</span>';
+};
 
 /* ---------- CSV ---------- */
 function parseCSV(text){
@@ -231,13 +239,23 @@ function rebuild(){
       const id=r['ID'];
       const sa=sales[s.cat+'|'+id]; const sh=shop[s.cat+'|'+norm(r['タイトル'])]||(sa&&shop[s.cat+'|'+norm(sa['タイトル'])]);
       if(!sh) miss.push(s.cat+'：'+r['タイトル']);
-      /* 販売日CSVのURLが公開CDNのものだけ採用。絵文字は管理画面URL等のため、ショップCSVの画像URLを使う */
+      /* サムネイル：LINEスタンプピッカー Pro と同じ方式。
+         絵文字＝ショップURLの商品IDから公開CDNのURLを組み立てる／スタンプ＝販売日CSVの公開URL。
+         どちらも失敗したらショップCSVの画像URLを予備として使う。 */
       const salesImg=(sa&&/^https:\/\/creators-market-all\.line-scdn\.net\//.test(sa['サムネイルURL']))?sa['サムネイルURL']:'';
       const shopImg=(sh&&/^https?:\/\//.test(sh['画像URL']||''))?sh['画像URL']:'';
-      const thumb=salesImg||shopImg;
+      let built='';
+      if(sh&&sh['ショップURL']){
+        const su=sh['ショップURL'];
+        let m;
+        if(su.includes('/emojishop/')&&(m=su.match(/\/product\/([^\/]+)\//))) built='https://stickershop.line-scdn.net/sticonshop/v1/product/'+m[1]+'/iPhone/main.png';
+        else if(su.includes('/stickershop/')&&(m=su.match(/\/product\/(\d+)\//))) built='https://stickershop.line-scdn.net/stickershop/v1/product/'+m[1]+'/LINEStorePC/main.png';
+      }
+      const thumb=(s.cat==='絵文字'?(built||shopImg):(salesImg||built))||shopImg;
+      const thumb2=[built,shopImg,salesImg].find(u=>u&&u!==thumb)||'';
       if(!thumb) noThumb++;
       items.push({uid:s.cat+'|'+id,cat:s.cat,id,title:r['タイトル'],state:p.state,month:p.month,
-        feature:r['特集企画']||'',thumb:thumb,date:sa?dateNum(sa['販売開始日']):0,
+        feature:r['特集企画']||'',thumb:thumb,thumb2:thumb2,date:sa?dateNum(sa['販売開始日']):0,
         shopUrl:sh?sh['ショップURL']:'',appUrl:sh?sh['LINEアプリURL']:''});
     });
   });
@@ -314,6 +332,7 @@ function render(){
   const w=document.getElementById('warn');
   w.innerHTML=warnText?'<div class="warn">'+esc(warnText)+'</div>':'';
   const done=visible.filter(i=>i.state==='done').length;
+  document.getElementById('hcount').textContent=visible.length+'件';
   document.getElementById('summary').textContent=items.length?('表示中 '+visible.length+'件（移行済み '+done+' ／ 移行予定 '+(visible.length-done)+'）'):'';
   const g=document.getElementById('grid'); g.innerHTML='';
   const frag=document.createDocumentFragment();
@@ -322,7 +341,7 @@ function render(){
     c.className='card'+(selected.includes(i.uid)?' sel':'')+(hasLink(i)?'':' nolink'); c.dataset.uid=i.uid;
     const badge=i.state==='done'?'<span class="badge done">✅ 移行済み</span>':'<span class="badge plan">🗓 '+i.month+'〜</span>';
     c.innerHTML=badge+'<span class="cat">'+i.cat+'</span>'+
-      '<div class="thumb">'+(i.thumb?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(i.thumb)+'" alt="" onerror="this.outerHTML=\'<span class=noimg>画像を読み込めません</span>\'">':'<span class="noimg">画像なし</span>')+'</div>'+
+      '<div class="thumb">'+(i.thumb?'<img loading="lazy" src="'+esc(i.thumb)+'" data-alt="'+esc(i.thumb2)+'" alt="" onerror="imgFail(this)">':'<span class="noimg">画像なし</span>')+'</div>'+
       '<span class="tick">✓</span>'+
       '<div class="meta"><div class="ti">'+esc(i.title)+'</div>'+(hasLink(i)?'':'<div class="nl">リンク未取得</div>')+'</div>';
     frag.appendChild(c);
