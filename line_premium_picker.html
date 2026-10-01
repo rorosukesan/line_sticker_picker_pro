@@ -80,7 +80,7 @@ input[type=search]{min-width:200px}
 </style>
 </head>
 <body>
-<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.4</span><div class="hcount" id="hcount">0件</div></header>
+<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.5</span><div class="hcount" id="hcount">0件</div></header>
 <main>
 
 <section class="panel">
@@ -138,6 +138,7 @@ input[type=search]{min-width:200px}
         <button data-v="titled">タイトル＋URL</button>
       </div>
       <button class="btn primary" id="copy">📋 コピー</button>
+      <button class="btn" id="clear">🗑 クリア</button>
       <span class="copied" id="copied">✅ コピー完了！</span>
     </div>
     <textarea id="out" readonly placeholder="作品を選ぶと、ここにリンクが並びます"></textarea>
@@ -403,6 +404,7 @@ document.getElementById('selAll').addEventListener('click',()=>{
   visible.forEach(i=>{ if(hasLink(i)&&!selected.includes(i.uid)) selected.push(i.uid); }); render();
 });
 document.getElementById('selNone').addEventListener('click',()=>{selected=[];render();});
+document.getElementById('clear').addEventListener('click',()=>{selected=[];render();});
 document.getElementById('copy').addEventListener('click',()=>{
   const t=document.getElementById('out').value; if(!t) return;
   const done=()=>{const el=document.getElementById('copied'); el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800);};
