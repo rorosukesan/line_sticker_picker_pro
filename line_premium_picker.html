@@ -47,23 +47,25 @@ input[type=search]{min-width:200px}
 .btn.primary:hover{background:var(--green-d)}
 .summary{font-size:13px;color:var(--sub);margin:4px 0 10px}
 .warn{background:#fffbeb;border:1px solid #fde68a;color:#92580a;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;white-space:pre-line}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cw,120px),1fr));gap:12px}
+.grid.sz-m{--cw:170px}.grid.sz-l{--cw:240px}
 .card{position:relative;background:var(--card);border:2px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
 .card:hover{border-color:#b7e4c7}
 .card.sel{border-color:var(--green);box-shadow:0 0 0 2px rgba(6,199,85,.25)}
 .card.nolink{cursor:not-allowed}
 .card.nolink .thumb{filter:grayscale(1);opacity:.5}
-.thumb{aspect-ratio:1/1;background:#f0f3f2 center/contain no-repeat;display:flex;align-items:center;justify-content:center}
+.thumb{position:relative;aspect-ratio:1/1;background:#f0f3f2 center/contain no-repeat;display:flex;align-items:center;justify-content:center}
 .thumb img{max-width:100%;max-height:100%;display:block}
 .noimg{font-size:11px;color:var(--sub)}
-.badge{position:absolute;top:6px;left:6px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff}
+.badge{position:absolute;z-index:2;top:6px;left:6px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff}
 .badge.done{background:var(--green-d)}
 .badge.plan{background:var(--amber)}
-.cat{position:absolute;top:6px;right:6px;font-size:10px;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.92);border:1px solid var(--line)}
-.tick{position:absolute;bottom:52px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.cattag{display:inline-block;font-size:10px;line-height:1.5;padding:0 6px;border-radius:6px;border:1px solid var(--line);background:#f5f7f6;color:var(--sub);margin-right:4px;vertical-align:1px}
+.tick{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700}
 .card.sel .tick{display:flex}
 .meta{padding:6px 8px 8px;font-size:12px}
-.meta .ti{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
+.meta .ti{overflow-wrap:anywhere;line-height:1.45}
+.grid.sz-m .meta{font-size:13px}.grid.sz-l .meta{font-size:15px}.grid.sz-l .badge{font-size:13px}
 .meta .nl{color:var(--red);font-size:11px}
 .empty{padding:40px;text-align:center;color:var(--sub)}
 #bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--green);box-shadow:0 -4px 16px rgba(0,0,0,.08);padding:10px 16px;z-index:10}
@@ -74,11 +76,11 @@ input[type=search]{min-width:200px}
 #out{width:100%;height:110px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical;background:#fafcfb}
 .copied{color:var(--green-d);font-weight:700;font-size:13px;opacity:0;transition:.2s}
 .copied.show{opacity:1}
-@media(max-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))} #out{height:80px} body{padding-bottom:340px}}
+@media(max-width:600px){#out{height:80px} body{padding-bottom:340px}}
 </style>
 </head>
 <body>
-<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.3</span><div class="hcount" id="hcount">0件</div></header>
+<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.4</span><div class="hcount" id="hcount">0件</div></header>
 <main>
 
 <section class="panel">
@@ -107,6 +109,9 @@ input[type=search]{min-width:200px}
       <option value="month">移行月順</option>
       <option value="title">タイトル順</option>
     </select>
+  </div>
+  <div class="group"><label class="t">サムネイル</label>
+    <div class="seg" id="sizeSeg"><button data-v="s" class="on">小</button><button data-v="m">中</button><button data-v="l">大</button></div>
   </div>
 </section>
 
@@ -340,10 +345,9 @@ function render(){
     const c=document.createElement('div');
     c.className='card'+(selected.includes(i.uid)?' sel':'')+(hasLink(i)?'':' nolink'); c.dataset.uid=i.uid;
     const badge=i.state==='done'?'<span class="badge done">✅ 移行済み</span>':'<span class="badge plan">🗓 '+i.month+'〜</span>';
-    c.innerHTML=badge+'<span class="cat">'+i.cat+'</span>'+
-      '<div class="thumb">'+(i.thumb?'<img loading="lazy" src="'+esc(i.thumb)+'" data-alt="'+esc(i.thumb2)+'" alt="" onerror="imgFail(this)">':'<span class="noimg">画像なし</span>')+'</div>'+
-      '<span class="tick">✓</span>'+
-      '<div class="meta"><div class="ti">'+esc(i.title)+'</div>'+(hasLink(i)?'':'<div class="nl">リンク未取得</div>')+'</div>';
+    c.innerHTML=badge+
+      '<div class="thumb">'+(i.thumb?'<img loading="lazy" src="'+esc(i.thumb)+'" data-alt="'+esc(i.thumb2)+'" alt="" onerror="imgFail(this)">':'<span class="noimg">画像なし</span>')+'<span class="tick">✓</span></div>'+
+      '<div class="meta"><div class="ti"><span class="cattag">'+i.cat+'</span>'+esc(i.title)+'</div>'+(hasLink(i)?'':'<div class="nl">'+(raw.shop?'リンク未取得':'ショップCSV未読込')+'</div>')+'</div>';
     frag.appendChild(c);
   });
   g.appendChild(frag);
@@ -370,6 +374,7 @@ function seg(id,fn){
   });
 }
 seg('catSeg',v=>{S.cat=v;render();});
+seg('sizeSeg',v=>{document.getElementById('grid').className='grid sz-'+v;});
 seg('stateSeg',v=>{
   S.state=v;
   if(v==='done'){ S.months.clear(); document.querySelectorAll('#monthChips .chip').forEach(c=>c.classList.remove('on')); }
