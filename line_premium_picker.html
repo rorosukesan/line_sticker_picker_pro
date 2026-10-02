@@ -63,6 +63,11 @@ input[type=search]{min-width:200px}
 .cattag{display:inline-block;font-size:10px;line-height:1.5;padding:0 6px;border-radius:6px;border:1px solid var(--line);background:#f5f7f6;color:var(--sub);margin-right:4px;vertical-align:1px}
 .tick{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700}
 .card.sel .tick{display:flex}
+.lks{display:flex;gap:4px;padding:5px 6px 0}
+.lk{flex:1;min-width:0;text-align:center;font-size:11px;line-height:1;padding:6px 2px;border-radius:6px;border:1px solid var(--green);color:var(--green-d);background:#fff;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.lk:hover{background:var(--green);color:#fff}
+.lk.off{border-color:var(--line);color:#b6bfc4;pointer-events:none}
+.grid.sz-m .lk{font-size:12px;padding:7px 2px}.grid.sz-l .lk{font-size:14px;padding:8px 2px}
 .meta{padding:6px 8px 8px;font-size:12px}
 .meta .ti{overflow-wrap:anywhere;line-height:1.45}
 .grid.sz-m .meta{font-size:13px}.grid.sz-l .meta{font-size:15px}.grid.sz-l .badge{font-size:13px}
@@ -80,7 +85,7 @@ input[type=search]{min-width:200px}
 </style>
 </head>
 <body>
-<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.6</span><div class="hcount" id="hcount">0件</div></header>
+<header><span>🌟</span><h1>LINEプレミアムピッカー</h1><span class="ver">v1.7</span><div class="hcount" id="hcount">0件</div></header>
 <main>
 
 <section class="panel">
@@ -333,6 +338,9 @@ const linkOf=i=>S.url==='shop'?i.shopUrl:i.appUrl;
 const hasLink=i=>!!(i.shopUrl||i.appUrl);
 
 /* ---------- render ---------- */
+function lkBtn(u,label){
+  return u?'<a class="lk" href="'+esc(u)+'" target="_blank" rel="noopener">'+label+'</a>':'<span class="lk off">'+label+'</span>';
+}
 function render(){
   visible=applyFilter();
   const w=document.getElementById('warn');
@@ -348,6 +356,7 @@ function render(){
     const badge=i.state==='done'?'<span class="badge done">✅ 移行済み</span>':'<span class="badge plan">🗓 '+i.month+'〜</span>';
     c.innerHTML=badge+
       '<div class="thumb">'+(i.thumb?'<img loading="lazy" src="'+esc(i.thumb)+'" data-alt="'+esc(i.thumb2)+'" alt="" onerror="imgFail(this)">':'<span class="noimg">画像なし</span>')+'<span class="tick">✓</span></div>'+
+      '<div class="lks">'+lkBtn(i.shopUrl,'🌐 PC')+lkBtn(i.appUrl,'📱 アプリ')+'</div>'+
       '<div class="meta"><div class="ti"><span class="cattag">'+i.cat+'</span>'+esc(i.title)+'</div>'+(hasLink(i)?'':'<div class="nl">'+(raw.shop?'リンク未取得':'ショップCSV未読込')+'</div>')+'</div>';
     frag.appendChild(c);
   });
@@ -394,6 +403,7 @@ document.getElementById('feature').addEventListener('change',e=>{S.feature=e.tar
 document.getElementById('kw').addEventListener('input',e=>{S.kw=e.target.value.trim();render();});
 document.getElementById('sort').addEventListener('change',e=>{S.sort=e.target.value;render();});
 document.getElementById('grid').addEventListener('click',e=>{
+  if(e.target.closest('.lk')) return;   // リンクボタンは選択を切り替えない
   const c=e.target.closest('.card'); if(!c) return;
   const it=items.find(i=>i.uid===c.dataset.uid); if(!it||!hasLink(it)) return;
   const k=selected.indexOf(it.uid);
