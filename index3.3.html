@@ -794,7 +794,12 @@ function copySalesUrls(type){
   });
 }
 
-function sKey(title,cat){return `${title}__${cat}`;}
+function normCat(cat){
+  // 販売日CSVは「着せかえ」、他CSVは「着せ替え」と表記揺れがあるため統一
+  if (!cat) return cat;
+  return cat.replace(/着せかえ/g,'着せ替え');
+}
+function sKey(title,cat){return `${title}__${normCat(cat)}`;}
 
 function readSalesFile(file,type){
   const r=new FileReader();
