@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINEスタンプピッカー Pro v3.3</title>
+<title>LINEスタンプピッカー Pro v3.31</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,7 +175,7 @@
 
 <div class="header">
   <span>🛒</span>
-  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.3</span></h1>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.31</span></h1>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('pickup')">ピックアップ</button>
     <button class="mode-tab" onclick="switchMode('sales')">📊 売上分析</button>
@@ -795,9 +795,9 @@ function copySalesUrls(type){
 }
 
 function normCat(cat){
-  // 販売日CSVは「着せかえ」、他CSVは「着せ替え」と表記揺れがあるため統一
+  // 「着せかえ」「着せ替え」「着せ替え」など表記揺れをすべて統一
   if (!cat) return cat;
-  return cat.replace(/着せかえ/g,'着せ替え');
+  return cat.replace(/着せかえ/g,'着せ替え').replace(/着せかえ/g,'着せ替え');
 }
 function sKey(title,cat){return `${title}__${normCat(cat)}`;}
 
@@ -926,11 +926,16 @@ function buildSalesData(){
     const sortedDates=[...item.dates].map(d=>d.replace(/\//g,'-')).sort();
     const newestDate=sortedDates[sortedDates.length-1];
     const oldestDate=sortedDates[0];
-    // 販売日CSV情報を統合
-    const sd = saleDateMap[k] || {};
+    // 販売日CSV情報を統合（タイトル×カテゴリキー、またはアイテムIDで引く）
+    const sd = saleDateMap[k] || saleDateIdMap[m.id||''] || {};
+    const itemId = m.id || sd.itemId || '';
     const thumb=s.imageUrl?getThumbnail(s.shopUrl,s.imageUrl,sd.thumbUrl||''):(m.previewUrl||getThumbnail(s.shopUrl,'',sd.thumbUrl||''));
     const thumbFinal = thumb || sd.thumbUrl || '';
-    return {...item, previewUrl:m.previewUrl||'', id:m.id||sd.itemId||'', shopUrl:s.shopUrl||'', lineAppUrl:s.lineAppUrl||'', kind:s.kind||'', thumb:thumbFinal, newestDate, oldestDate, saleDate:sd.saleDate||'', cumSales:sd.cumSales||0};
+    // 着せ替えはショップCSVに載らないためIDからURL生成
+    const isTheme = item.category === '着せ替え';
+    const shopUrl    = s.shopUrl    || (isTheme && itemId ? `https://store.line.me/themeshop/product/${itemId}/ja` : '');
+    const lineAppUrl = s.lineAppUrl || (isTheme && itemId ? `https://line.me/S/shop/theme/detail?id=${itemId}` : '');
+    return {...item, previewUrl:m.previewUrl||'', id:itemId, shopUrl, lineAppUrl, kind:s.kind||'', thumb:thumbFinal, newestDate, oldestDate, saleDate:sd.saleDate||'', cumSales:sd.cumSales||0};
   });
 
   // 月リスト
@@ -1798,8 +1803,8 @@ function buildOfficialData() {
       countries: [...item.countries].filter(Boolean),
       hasPremium: item.prem_revPost > 0,
       thumb,
-      shopUrl:    shop.shopUrl    || '',
-      lineAppUrl: shop.lineAppUrl || '',
+      shopUrl:    shop.shopUrl    || (cat==='着せ替え' && item.id ? `https://store.line.me/themeshop/product/${item.id}/ja` : ''),
+      lineAppUrl: shop.lineAppUrl || (cat==='着せ替え' && item.id ? `https://line.me/S/shop/theme/detail?id=${item.id}` : ''),
       kind:       shop.kind       || '',
       saleDate:   (offSaleDateMap[item.id] || offSaleDateMap[sKey(jaTitle,cat)] || {}).saleDate || '',
       cumSales:   (offSaleDateMap[item.id] || offSaleDateMap[sKey(jaTitle,cat)] || {}).cumSales || 0,
