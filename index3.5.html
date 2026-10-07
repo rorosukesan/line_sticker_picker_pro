@@ -66,6 +66,10 @@
   .output-header h3 { font-size: 14px; font-weight: 700; flex: 1; }
   .output-textarea { width: 100%; height: 80px; border: 1px solid #ddd; border-radius: 8px; padding: 8px; font-size: 11px; resize: none; font-family: monospace; background: #f9f9f9; }
   .copy-success { color: #06C755; font-size: 12px; font-weight: 700; display: none; }
+  .fmt-seg { display: inline-flex; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .fmt-btn { border: none; background: #fff; padding: 5px 11px; font-size: 12px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; border-right: 1px solid #ddd; color: #555; }
+  .fmt-btn:last-child { border-right: none; }
+  .fmt-btn.active { background: #06C755; color: #fff; font-weight: 700; }
   .empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
   .bottom-spacer { height: 160px; }
 
@@ -264,6 +268,10 @@
     <div class="output-header">
       <h3>📋 URL一覧 (<span id="salesOutputCount">0</span>件)</h3>
       <span class="copy-success" id="salesCopySuccess">✅ コピー完了！</span>
+      <div class="fmt-seg" id="salesFmtSeg">
+        <button class="fmt-btn active" data-fmt="url" onclick="setSalesFmt('url',this)">URLのみ</button>
+        <button class="fmt-btn" data-fmt="titled" onclick="setSalesFmt('titled',this)">タイトル＋URL</button>
+      </div>
       <button class="btn btn-blue" onclick="copySalesUrls('shop')">🌐 ショップURL</button>
       <button class="btn btn-green" onclick="copySalesUrls('line')">📱 LINEアプリURL</button>
     </div>
@@ -397,6 +405,10 @@
     <div class="output-header">
       <h3>📋 URL一覧 (<span id="offOutputCount">0</span>件)</h3>
       <span class="copy-success" id="offCopySuccess">✅ コピー完了！</span>
+      <div class="fmt-seg" id="offFmtSeg">
+        <button class="fmt-btn active" data-fmt="url" onclick="setOffFmt('url',this)">URLのみ</button>
+        <button class="fmt-btn" data-fmt="titled" onclick="setOffFmt('titled',this)">タイトル＋URL</button>
+      </div>
       <button class="btn btn-blue" onclick="copyOffUrls('shop')">🌐 ショップURL</button>
       <button class="btn btn-green" onclick="copyOffUrls('line')">📱 LINEアプリURL</button>
     </div>
@@ -611,10 +623,14 @@ let saleDateIdMap={}; // key: itemId → same
 let salesLoaded={sales:false,master:false,shop:false};
 let heatBorderDate=''; // ヒートマップの境界日付
 let salesSelected=new Map(); // key→shopUrl
+let salesFmt='url'; // 'url' | 'titled'
 
 function toggleSalesSelect(k,shopUrl,appUrl){
   if(salesSelected.has(k)) salesSelected.delete(k);
-  else salesSelected.set(k,{shopUrl,appUrl});
+  else {
+    const item=salesData.find(i=>sKey(i.title,i.category)===k)||{};
+    salesSelected.set(k,{shopUrl,appUrl,title:item.title||k});
+  }
   updateSalesOutput();
   renderSalesGrid();
 }
@@ -624,12 +640,30 @@ function updateSalesOutput(){
   document.getElementById('salesOutputCount').textContent=salesSelected.size;
   if(!salesSelected.size){panel.classList.remove('visible');return;}
   panel.classList.add('visible');
-  document.getElementById('salesOutputText').value=[...salesSelected.values()].map(v=>v.shopUrl).filter(Boolean).join('\n');
+  refreshSalesOutput();
 }
 
+function setSalesFmt(fmt, btn){
+  salesFmt=fmt;
+  document.querySelectorAll('#salesFmtSeg .fmt-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  refreshSalesOutput();
+}
+function refreshSalesOutput(){
+  const entries=[...salesSelected.values()];
+  const lines=entries.map(v=>{
+    const u=(salesFmt==='url'?v.shopUrl:null)||v.shopUrl||'';
+    return salesFmt==='titled'?(v.title+'\n'+u):u;
+  }).filter(l=>l);
+  document.getElementById('salesOutputText').value=lines.join(salesFmt==='titled'?'\n\n':'\n');
+}
 function copySalesUrls(type){
-  const urls=[...salesSelected.values()].map(v=>type==='line'?v.appUrl:v.shopUrl).filter(Boolean);
-  const text=urls.join('\n');
+  const entries=[...salesSelected.values()];
+  const lines=entries.map(v=>{
+    const u=(type==='line'?v.appUrl:v.shopUrl)||'';
+    if(!u) return '';
+    return salesFmt==='titled'?(v.title+'\n'+u):u;
+  }).filter(Boolean);
+  const text=lines.join(salesFmt==='titled'?'\n\n':'\n');
   document.getElementById('salesOutputText').value=text;
   navigator.clipboard.writeText(text).then(()=>{
     const el=document.getElementById('salesCopySuccess');
@@ -2379,12 +2413,14 @@ function toggleOffReloadPanel() {
 
 // 公式CSV選択管理
 let offSelected = new Map();
+let offFmt = 'url'; // 'url' | 'titled'
 
 function toggleOffCard(id, shopUrl, lineAppUrl) {
   if (offSelected.has(id)) {
     offSelected.delete(id);
   } else {
-    offSelected.set(id, {shopUrl, lineAppUrl});
+    const item=officialData.find(i=>`${i.id}__${i.type}`===id)||{};
+    offSelected.set(id, {shopUrl, lineAppUrl, title:item.jaTitle||item.title||id});
   }
   updateOffOutputPanel();
   // カードのselectedクラスを更新
@@ -2400,14 +2436,33 @@ function updateOffOutputPanel() {
   if (offSelected.size === 0) { panel.classList.remove('visible'); return; }
   panel.classList.add('visible');
   document.getElementById('offOutputCount').textContent = offSelected.size;
-  copyOffUrls('shop', false);
+  refreshOffOutput();
 }
 
+function setOffFmt(fmt, btn){
+  offFmt=fmt;
+  document.querySelectorAll('#offFmtSeg .fmt-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  refreshOffOutput();
+}
+function refreshOffOutput(){
+  const entries=[...offSelected.values()];
+  const lines=entries.map(v=>{
+    const u=v.shopUrl||'';
+    return offFmt==='titled'?(v.title+'\n'+u):u;
+  }).filter(l=>l);
+  document.getElementById('offOutputText').value=lines.join(offFmt==='titled'?'\n\n':'\n');
+}
 function copyOffUrls(type, doCopy=true) {
-  const urls = [...offSelected.values()].map(v => type==='shop' ? v.shopUrl : v.lineAppUrl).filter(Boolean);
-  document.getElementById('offOutputText').value = urls.join('\n');
+  const entries=[...offSelected.values()];
+  const lines=entries.map(v=>{
+    const u=(type==='shop' ? v.shopUrl : v.lineAppUrl)||'';
+    if(!u) return '';
+    return offFmt==='titled'?(v.title+'\n'+u):u;
+  }).filter(Boolean);
+  const text=lines.join(offFmt==='titled'?'\n\n':'\n');
+  document.getElementById('offOutputText').value = text;
   if (doCopy) {
-    navigator.clipboard.writeText(urls.join('\n')).then(()=>{
+    navigator.clipboard.writeText(text).then(()=>{
       const el = document.getElementById('offCopySuccess');
       el.style.display='inline'; setTimeout(()=>el.style.display='none', 2000);
     });
