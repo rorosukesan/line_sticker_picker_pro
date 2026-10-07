@@ -254,7 +254,9 @@ function parsePeriod(p){
 function dateNum(s){ const m=/(\d{4})\/(\d{1,2})\/(\d{1,2})/.exec(s||''); return m?(+m[1])*10000+(+m[2])*100+(+m[3]):0; }
 
 function rebuild(){
-  const sales={}; (raw.sales||[]).forEach(x=>{sales[x['カテゴリ']+'|'+x['アイテムID']]=x;});
+  /* 売上分析CSVは「着せかえ」カテゴリも含む。カテゴリ列の表記ゆれを正規化して統一キーを作成 */
+  const normCat=c=>String(c||'').replace('着せかえ','着せ替え');
+  const sales={}; (raw.sales||[]).forEach(x=>{sales[normCat(x['カテゴリ'])+'|'+x['アイテムID']]=x;});
   const norm=s=>String(s||'').normalize('NFKC').replace(/\s+/g,'');
   const shop={};  (raw.shop||[]).forEach(x=>{shop[x['カテゴリ']+'|'+norm(x['タイトル'])]=x;});
   items=[]; const miss=[]; const themeMiss=[]; let noThumb=0;
@@ -266,23 +268,22 @@ function rebuild(){
       const id=r['ID'];
       const title=r['タイトル'];
 
-      /* 着せ替えはthemeUrlMapからURL・サムネイルを取得 */
+      /* 着せ替え：
+         - サムネイル・販売開始日 → 売上分析CSV（カテゴリ「着せかえ」→「着せ替え」に正規化済み）
+         - ショップURL・アプリURL → 着せ替えURLCSV（themeUrlMap） */
       if(s.cat==='着せ替え'){
+        const sa=sales['着せ替え'+'|'+id];
         const tu=themeUrlMap[title];
-        if(!tu){
-          if(raw.themeUrl) themeMiss.push(title);
-          // URLCSVがない場合もアイテムを登録（URL未取得として）
-          items.push({uid:s.cat+'|'+id,cat:s.cat,id,title,state:p.state,month:p.month,
-            feature:r['特集企画']||'',thumb:'',thumb2:'',date:0,shopUrl:'',appUrl:''});
-          noThumb++;
-          return;
-        }
-        const uuid=tu.uuid;
-        const thumb=uuid?'https://store.line-scdn.net/0h/themes/'+uuid+'/storeListIconS.png':'';
-        const thumb2=uuid?'https://store.line-scdn.net/0h/themes/'+uuid+'/storeListIcon.png':'';
+        if(!tu && raw.themeUrl) themeMiss.push(title);
+        /* サムネイル：売上分析CSVのURLを優先（スタンプと同じ creators-market-all.line-scdn.net） */
+        const salesImg=(sa&&/^https:\/\/creators-market-all\.line-scdn\.net\//.test(sa['サムネイルURL']))?sa['サムネイルURL']:'';
+        const thumb=salesImg;
+        const thumb2='';
+        if(!thumb) noThumb++;
         items.push({uid:s.cat+'|'+id,cat:s.cat,id,title,state:p.state,month:p.month,
-          feature:r['特集企画']||'',thumb,thumb2,date:0,
-          shopUrl:tu.shopUrl,appUrl:tu.appUrl});
+          feature:r['特集企画']||'',thumb,thumb2,
+          date:sa?dateNum(sa['販売開始日']):0,
+          shopUrl:tu?tu.shopUrl:'',appUrl:tu?tu.appUrl:''});
         return;
       }
 
@@ -312,9 +313,10 @@ function rebuild(){
   selected=selected.filter(u=>items.some(i=>i.uid===u));
   const w=[];
   if(!raw.sales && items.filter(i=>i.cat!=='着せ替え').length) w.push('販売日CSVが未読み込みです（スタンプのサムネイルと販売開始日の並び替えに使います）。');
+  if(!raw.sales && raw.theme) w.push('販売日CSVが未読み込みのため、着せ替えのサムネイルと販売開始日が取得できません。');
   if(!raw.shop && items.filter(i=>i.cat!=='着せ替え').length) w.push('ショップCSVが未読み込みのため、スタンプ・絵文字のリンクを作れません（絵文字のサムネイルも表示されません）。');
-  if(!raw.themeUrl && raw.theme) w.push('着せ替えURLCSVが未読み込みのため、着せ替えのリンクとサムネイルを取得できません（着せ替えURLスキャナーで作成してください）。');
-  if(noThumb && raw.sales && raw.shop && raw.themeUrl) w.push('サムネイルが見つからない作品：'+noThumb+'件');
+  if(!raw.themeUrl && raw.theme) w.push('着せ替えURLCSVが未読み込みのため、着せ替えのリンクを作れません（着せ替えURLスキャナーで作成してください）。');
+  if(noThumb && raw.sales) w.push('サムネイルが見つからない作品：'+noThumb+'件');
   if(raw.shop && miss.length) w.push('ショップCSVに見つからない作品（選択できません）：'+miss.length+'件\n'+miss.slice(0,8).join('\n')+(miss.length>8?'\n…ほか'+(miss.length-8)+'件':''));
   if(raw.themeUrl && themeMiss.length) w.push('着せ替えURLCSVに見つからない着せ替え（選択できません）：'+themeMiss.length+'件\n'+themeMiss.slice(0,8).join('\n')+(themeMiss.length>8?'\n…ほか'+(themeMiss.length-8)+'件':''));
   warnText=w.join('\n');
