@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINEスタンプピッカー Pro v3.31</title>
+<title>LINEスタンプピッカー Pro v3.32</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,7 +175,7 @@
 
 <div class="header">
   <span>🛒</span>
-  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.31</span></h1>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.32</span></h1>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('pickup')">ピックアップ</button>
     <button class="mode-tab" onclick="switchMode('sales')">📊 売上分析</button>
@@ -253,6 +253,12 @@
         <p>LINE販売日スキャナー<br>のCSV（オプション）</p>
         <input type="file" id="saleDateFileInput" accept=".csv">
       </div>
+      <div class="sales-upload-box" id="themeUrlBox" onclick="document.getElementById('themeUrlFileInput').click()">
+        <div class="s-icon">🎨</div>
+        <h3 id="themeUrlBoxTitle">着せ替えURLCSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span></h3>
+        <p>着せ替えショップURLスキャナー<br>のCSV（オプション）</p>
+        <input type="file" id="themeUrlFileInput" accept=".csv">
+      </div>
     </div>
     <button class="btn btn-green" id="salesStartBtn" style="display:none" onclick="buildSalesData()">▶ 分析を開始</button>
   </div>
@@ -281,6 +287,11 @@
           <span style="font-size:20px;">📅</span>
           <span id="reloadSaleDateLabel">販売日CSV（任意）</span>
           <input type="file" id="reloadSaleDateInput" accept=".csv" style="display:none">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;background:white;border:2px dashed #ddd;border-radius:10px;padding:10px 16px;min-width:140px;font-size:11px;color:#555;text-align:center;transition:all 0.15s;" id="reloadThemeUrlBox">
+          <span style="font-size:20px;">🎨</span>
+          <span id="reloadThemeUrlLabel">着せ替えURLCSV（任意）</span>
+          <input type="file" id="reloadThemeUrlInput" accept=".csv" style="display:none">
         </label>
         <button class="btn btn-gray" style="align-self:center;" onclick="toggleReloadPanel()">✕ 閉じる</button>
       </div>
@@ -764,6 +775,7 @@ function copyUrls(type){
 // ===== 売上分析モード =====
 let rawSales=[], masterMap={}, shopMap={}, salesData=[], shopListOrder=[];
 let saleDateMap={};  // key: sKey(title,cat) → {saleDate, cumSales, thumbUrl, itemId}
+let themeUrlMap={};  // key: title → {shopUrl, lineAppUrl, uuid}
 let saleDateIdMap={}; // key: itemId → same
 let salesLoaded={sales:false,master:false,shop:false};
 let heatBorderDate=''; // ヒートマップの境界日付
@@ -873,6 +885,7 @@ function readSaleDateFile(file) {
     });
 
     setBox('saleDateBox','saleDateBoxTitle',`✅ 販売日CSV（${rows.length}件）`);
+    setReloadBox('reloadSaleDateBox','reloadSaleDateLabel',`✅ 販売日CSV（${rows.length}件）`);
 
     // ソートオプションを有効化
     const sortSel = document.getElementById('sortFilter');
@@ -887,18 +900,56 @@ function readSaleDateFile(file) {
   r.readAsText(file, 'UTF-8');
 }
 
+function readThemeUrlFile(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    if(!rows.length) return;
+    const cols=Object.keys(rows[0]);
+    if(!cols.includes('UUID')||!cols.includes('タイトル')){
+      alert('着せ替えURLCSVが正しくありません。\n（「タイトル」「UUID」列が必要です）');
+      return;
+    }
+    themeUrlMap={};
+    rows.forEach(r=>{
+      const title=r['タイトル']||'';
+      const uuid=r['UUID']||'';
+      if(!title||!uuid) return;
+      themeUrlMap[title]={
+        shopUrl:   r['ショップURL']  || `https://store.line.me/themeshop/product/${uuid}/ja`,
+        lineAppUrl:r['アプリURL']    || `https://line.me/S/shop/theme/detail?id=${uuid}`,
+        uuid
+      };
+    });
+    setBox('themeUrlBox','themeUrlBoxTitle',`✅ 着せ替えURLCSV（${rows.length}件）`);
+    setReloadBox('reloadThemeUrlBox','reloadThemeUrlLabel',`✅ 着せ替えURLCSV（${rows.length}件）`);
+    if(salesData.length) buildSalesData();
+    else renderSalesGrid();
+  };
+  r.readAsText(file,'UTF-8');
+}
+
 function setBox(boxId,titleId,text){
   document.getElementById(boxId).classList.add('loaded');
   const t=document.getElementById(titleId); t.textContent=text; t.classList.add('done');
+}
+
+function setReloadBox(boxId,labelId,text){
+  const b=document.getElementById(boxId);
+  if(b) b.style.borderColor='#06C755';
+  const l=document.getElementById(labelId);
+  if(l){ l.textContent=text; l.style.color='#06C755'; }
 }
 
 document.getElementById('salesFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'sales');});
 document.getElementById('masterFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'master');});
 document.getElementById('shopFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'shop');});
 
+document.getElementById('themeUrlFileInput').addEventListener('change',e=>{if(e.target.files[0])readThemeUrlFile(e.target.files[0]);});
+
 // 売上モードのドラッグ&ドロップ
-['salesBox','masterBox','shopBox','saleDateBox'].forEach((boxId,i)=>{
-  const types=['sales','master','shop','saledate'];
+['salesBox','masterBox','shopBox','saleDateBox','themeUrlBox'].forEach((boxId,i)=>{
+  const types=['sales','master','shop','saledate','themeurl'];
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';});
   box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';});
@@ -907,6 +958,7 @@ document.getElementById('shopFileInput').addEventListener('change',e=>{if(e.targ
     const f=e.dataTransfer.files[0];
     if(f&&f.name.endsWith('.csv')){
       if(types[i]==='saledate') readSaleDateFile(f);
+      else if(types[i]==='themeurl') readThemeUrlFile(f);
       else readSalesFile(f,types[i]);
     }
   });
@@ -931,10 +983,11 @@ function buildSalesData(){
     const itemId = m.id || sd.itemId || '';
     const thumb=s.imageUrl?getThumbnail(s.shopUrl,s.imageUrl,sd.thumbUrl||''):(m.previewUrl||getThumbnail(s.shopUrl,'',sd.thumbUrl||''));
     const thumbFinal = thumb || sd.thumbUrl || '';
-    // 着せ替えはショップCSVに載らないためIDからURL生成
+    // 着せ替えはショップCSVに載らないため着せ替えURLCSVから補完
     const isTheme = item.category === '着せ替え';
-    const shopUrl    = s.shopUrl    || (isTheme && itemId ? `https://store.line.me/themeshop/product/${itemId}/ja` : '');
-    const lineAppUrl = s.lineAppUrl || (isTheme && itemId ? `https://line.me/S/shop/theme/detail?id=${itemId}` : '');
+    const tu = isTheme ? (themeUrlMap[item.title] || {}) : {};
+    const shopUrl    = s.shopUrl    || tu.shopUrl    || '';
+    const lineAppUrl = s.lineAppUrl || tu.lineAppUrl || '';
     return {...item, previewUrl:m.previewUrl||'', id:itemId, shopUrl, lineAppUrl, kind:s.kind||'', thumb:thumbFinal, newestDate, oldestDate, saleDate:sd.saleDate||'', cumSales:sd.cumSales||0};
   });
 
@@ -1621,15 +1674,14 @@ document.getElementById('reloadMasterInput').addEventListener('change',e=>{if(e.
 document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'shop');});
 
 document.getElementById('reloadSaleDateInput').addEventListener('change',e=>{
-  if(e.target.files[0]){
-    readSaleDateFile(e.target.files[0]);
-    document.getElementById('reloadSaleDateLabel').textContent='✅ 読み込み完了';
-    document.getElementById('reloadSaleDateBox').style.borderColor='#06C755';
-  }
+  if(e.target.files[0]) readSaleDateFile(e.target.files[0]);
+});
+document.getElementById('reloadThemeUrlInput').addEventListener('change',e=>{
+  if(e.target.files[0]) readThemeUrlFile(e.target.files[0]);
 });
 
 // リロードパネルのドラッグ＆ドロップ
-[['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop'],['reloadSaleDateBox','saledate']].forEach(([boxId,type])=>{
+[['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop'],['reloadSaleDateBox','saledate'],['reloadThemeUrlBox','themeurl']].forEach(([boxId,type])=>{
   const box=document.getElementById(boxId);
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
   box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';box.style.background='white';});
@@ -1638,20 +1690,16 @@ document.getElementById('reloadSaleDateInput').addEventListener('change',e=>{
     box.style.borderColor='';box.style.background='white';
     const f=e.dataTransfer.files[0];
     if(f&&f.name.endsWith('.csv')){
-      if(type==='saledate'){
-        readSaleDateFile(f);
-        document.getElementById('reloadSaleDateLabel').textContent='✅ 読み込み完了';
-        box.style.borderColor='#06C755';
-      } else {
-        reloadFile(f,type);
-      }
+      if(type==='saledate') readSaleDateFile(f);
+      else if(type==='themeurl') readThemeUrlFile(f);
+      else reloadFile(f,type);
     }
   });
 });
 
 function resetSales(){
   rawSales=[];masterMap={};shopMap={};salesData=[];salesSelected=new Map();shopListOrder=[];
-  saleDateMap={}; saleDateIdMap={}; heatBorderDate='';
+  saleDateMap={}; saleDateIdMap={}; heatBorderDate=''; themeUrlMap={};
   salesHeatmapOn=true; heatThreshold=0.5;
   const slider=document.getElementById('heatSlider');
   if(slider) slider.value=50;
@@ -1659,13 +1707,14 @@ function resetSales(){
   if(sliderVal) sliderVal.textContent='50%';
   salesLoaded={sales:false,master:false,shop:false};
   document.getElementById('salesOutputPanel').classList.remove('visible');
-  ['salesFileInput','masterFileInput','shopFileInput','saleDateFileInput'].forEach(id=>document.getElementById(id).value='');
-  ['salesBox','masterBox','shopBox','saleDateBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  ['salesFileInput','masterFileInput','shopFileInput','saleDateFileInput','themeUrlFileInput'].forEach(id=>document.getElementById(id).value='');
+  ['salesBox','masterBox','shopBox','saleDateBox','themeUrlBox'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
   document.getElementById('salesBoxTitle').textContent='売上CSV';
   document.getElementById('masterBoxTitle').textContent='マスターリストCSV';
   document.getElementById('shopBoxTitle').textContent='ショップリストCSV';
   document.getElementById('saleDateBoxTitle').innerHTML='販売日CSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span>';
-  ['salesBoxTitle','masterBoxTitle','shopBoxTitle','saleDateBoxTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  document.getElementById('themeUrlBoxTitle').innerHTML='着せ替えURLCSV <span style="font-size:9px;background:#f39c12;color:white;padding:1px 5px;border-radius:4px;">任意</span>';
+  ['salesBoxTitle','masterBoxTitle','shopBoxTitle','saleDateBoxTitle','themeUrlBoxTitle'].forEach(id=>document.getElementById(id).classList.remove('done'));
   document.getElementById('salesMainArea').style.display='none';
   document.getElementById('salesUploadArea').style.display='flex';
   document.getElementById('salesStartBtn').style.display='none';
