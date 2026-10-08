@@ -704,7 +704,12 @@ function readSalesFile(file,type){
       masterMap={};
       rows.forEach(r=>{ masterMap[sKey(r['タイトル'],r['カテゴリ'])]={previewUrl:r['プレビューURL']||'',id:r['ID']||''}; });
       salesLoaded.master=true;
-      setBox('masterBox','masterBoxTitle',`✅ マスターリスト（${rows.length}件）`);
+      const masterMsg=`✅ マスターリスト（${rows.length}件）`;
+      setBox('masterBox','masterBoxTitle',masterMsg);
+      setReloadBox('reloadMasterBox','reloadMasterLabel',masterMsg);
+      // 公式CSVタブにも反映
+      setOffBox('offMasterBox','offMasterTitle',masterMsg);
+      setReloadBox('offReloadMasterBox','offReloadMasterLabel',masterMsg);
     } else {
       if(!cols.includes('ショップURL')){
         alert('ショップリストCSVが正しくありません。\nLINEショップスキャナーが出力したCSVを選択してください。\n（「ショップURL」列が必要です）');
@@ -1640,7 +1645,12 @@ function readOfficialFile(file, type) {
         offMasterMap[id] = { title, cat, previewUrl: r['プレビューURL']||'' };
       });
       offLoaded.master = true;
-      setOffBox('offMasterBox','offMasterTitle',`✅ マスターリスト（${rows.length}件）`);
+      const offMasterMsg=`✅ マスターリスト（${rows.length}件）`;
+      setOffBox('offMasterBox','offMasterTitle',offMasterMsg);
+      setReloadBox('offReloadMasterBox','offReloadMasterLabel',offMasterMsg);
+      // 売上タブにも反映
+      setBox('masterBox','masterBoxTitle',offMasterMsg);
+      setReloadBox('reloadMasterBox','reloadMasterLabel',offMasterMsg);
 
     } else if (type === 'shop') {
       if (!cols.includes('ショップURL')) {
