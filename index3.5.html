@@ -702,8 +702,15 @@ function readSalesFile(file,type){
         return;
       }
       masterMap={};
-      rows.forEach(r=>{ masterMap[sKey(r['タイトル'],r['カテゴリ'])]={previewUrl:r['プレビューURL']||'',id:r['ID']||''}; });
+      offMasterMap={};
+      rows.forEach(r=>{
+        const title=r['タイトル']||''; const cat=r['カテゴリ']||''; const id=r['ID']||'';
+        const previewUrl=r['プレビューURL']||'';
+        masterMap[sKey(title,cat)]={previewUrl,id};
+        if(id) offMasterMap[id]={title,cat,previewUrl};
+      });
       salesLoaded.master=true;
+      offLoaded.master=true;
       const masterMsg=`✅ マスターリスト（${rows.length}件）`;
       setBox('masterBox','masterBoxTitle',masterMsg);
       setReloadBox('reloadMasterBox','reloadMasterLabel',masterMsg);
@@ -716,12 +723,17 @@ function readSalesFile(file,type){
         return;
       }
       shopMap={}; shopListOrder=[];
+      offShopMap={}; offShopListOrder=[];
       rows.forEach(r=>{
         const k=sKey(r['タイトル'],r['カテゴリ']);
-        shopMap[k]={shopUrl:r['ショップURL']||'',lineAppUrl:r['LINEアプリURL']||'',imageUrl:r['画像URL']||'',kind:r['種別']||''};
+        const entry={shopUrl:r['ショップURL']||'',lineAppUrl:r['LINEアプリURL']||'',imageUrl:r['画像URL']||'',kind:r['種別']||''};
+        shopMap[k]=entry;
         shopListOrder.push(k);
+        offShopMap[k]=entry;
+        offShopListOrder.push(k);
       });
       salesLoaded.shop=true;
+      offLoaded.shop=true;
       const shopMsg=`✅ ショップリスト（${rows.length}件）`;
       setBox('shopBox','shopBoxTitle',shopMsg);
       setReloadBox('reloadShopBox','reloadShopLabel',shopMsg);
@@ -746,6 +758,7 @@ function readSaleDateFile(file) {
     }
     saleDateMap = {};
     saleDateIdMap = {};
+    offSaleDateMap = {};
     rows.forEach(r => {
       const title   = r['タイトル'] || '';
       const cat     = r['カテゴリ'] || '';
@@ -757,6 +770,8 @@ function readSaleDateFile(file) {
       const k = sKey(title, cat);
       saleDateMap[k] = data;
       if (itemId) saleDateIdMap[itemId] = data;
+      offSaleDateMap[sKey(title,cat)] = data;
+      if (itemId) offSaleDateMap[itemId] = data;
     });
 
     const saleDateMsg=`✅ 販売日CSV（${rows.length}件）`;
@@ -1638,13 +1653,17 @@ function readOfficialFile(file, type) {
         return;
       }
       offMasterMap = {};
+      masterMap = {};
       rows.forEach(r => {
         const id = r['ID'] || '';
         const title = r['タイトル'] || '';
         const cat = r['カテゴリ'] || '';
-        offMasterMap[id] = { title, cat, previewUrl: r['プレビューURL']||'' };
+        const previewUrl = r['プレビューURL']||'';
+        if(id) offMasterMap[id] = { title, cat, previewUrl };
+        masterMap[sKey(title,cat)] = { previewUrl, id };
       });
       offLoaded.master = true;
+      salesLoaded.master = true;
       const offMasterMsg=`✅ マスターリスト（${rows.length}件）`;
       setOffBox('offMasterBox','offMasterTitle',offMasterMsg);
       setReloadBox('offReloadMasterBox','offReloadMasterLabel',offMasterMsg);
@@ -1659,19 +1678,25 @@ function readOfficialFile(file, type) {
       }
       offShopMap = {};
       offShopListOrder = [];
+      shopMap = {};
+      shopListOrder = [];
       rows.forEach(r => {
         const title = r['タイトル'] || '';
         const cat   = r['カテゴリ'] || '';
         const k = sKey(title, cat);
-        offShopMap[k] = {
+        const entry = {
           shopUrl: r['ショップURL']||'',
           lineAppUrl: r['LINEアプリURL']||'',
           imageUrl: r['画像URL']||'',
           kind: r['種別']||''
         };
+        offShopMap[k] = entry;
         offShopListOrder.push(k);
+        shopMap[k] = entry;
+        shopListOrder.push(k);
       });
       offLoaded.shop = true;
+      salesLoaded.shop = true;
       const offShopMsg=`✅ ショップリスト（${rows.length}件）`;
       setOffBox('offShopBox','offShopTitle',offShopMsg);
       setReloadBox('offReloadShopBox','offReloadShopLabel',offShopMsg);
@@ -2381,6 +2406,8 @@ function readOffSaleDateFile(file) {
       return;
     }
     offSaleDateMap = {};
+    saleDateMap = {};
+    saleDateIdMap = {};
     rows.forEach(r => {
       const itemId  = r['アイテムID'] || '';
       const title   = r['タイトル']   || '';
@@ -2388,10 +2415,12 @@ function readOffSaleDateFile(file) {
       const saleDate = normalizeDate(r['販売開始日']||'');
       const cumSales = parseInt((r['売上（累計）']||'0').replace(/[^\d]/g,''))||0;
       const thumbUrl = r['サムネイルURL'] || '';
-      const data = { saleDate, cumSales, thumbUrl, title, cat };
+      const data = { saleDate, cumSales, thumbUrl, title, cat, itemId };
       if (itemId) offSaleDateMap[itemId] = data;
-      // タイトル×カテゴリでも引けるように
       offSaleDateMap[sKey(title,cat)] = data;
+      // 売上タブ用にも投入
+      saleDateMap[sKey(title,cat)] = data;
+      if (itemId) saleDateIdMap[itemId] = data;
     });
     const offSaleDateMsg=`✅ 販売日CSV（${rows.length}件）`;
     setOffBox('offSaleDateBox','offSaleDateTitle',offSaleDateMsg);
