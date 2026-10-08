@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINEスタンプピッカー Pro v3.5</title>
+<title>LINEスタンプピッカー Pro v3.5.1</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -135,7 +135,7 @@
 
 <div class="header">
   <span>🛒</span>
-  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.5</span></h1>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.5.1</span></h1>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('sales')">📊 売上分析</button>
     <button class="mode-tab" onclick="switchMode('official')">🏦 公式CSV</button>
@@ -717,7 +717,12 @@ function readSalesFile(file,type){
         shopListOrder.push(k);
       });
       salesLoaded.shop=true;
-      setBox('shopBox','shopBoxTitle',`✅ ショップリスト（${rows.length}件）`);
+      const shopMsg=`✅ ショップリスト（${rows.length}件）`;
+      setBox('shopBox','shopBoxTitle',shopMsg);
+      setReloadBox('reloadShopBox','reloadShopLabel',shopMsg);
+      // 公式CSVタブにも反映
+      setOffBox('offShopBox','offShopTitle',shopMsg);
+      setReloadBox('offReloadShopBox','offReloadShopLabel',shopMsg);
     }
     document.getElementById('salesStartBtn').style.display=(salesLoaded.sales&&salesLoaded.master&&salesLoaded.shop)?'inline-block':'none';
   };
@@ -749,8 +754,12 @@ function readSaleDateFile(file) {
       if (itemId) saleDateIdMap[itemId] = data;
     });
 
-    setBox('saleDateBox','saleDateBoxTitle',`✅ 販売日CSV（${rows.length}件）`);
-    setReloadBox('reloadSaleDateBox','reloadSaleDateLabel',`✅ 販売日CSV（${rows.length}件）`);
+    const saleDateMsg=`✅ 販売日CSV（${rows.length}件）`;
+    setBox('saleDateBox','saleDateBoxTitle',saleDateMsg);
+    setReloadBox('reloadSaleDateBox','reloadSaleDateLabel',saleDateMsg);
+    // 公式CSVタブにも反映
+    setOffBox('offSaleDateBox','offSaleDateTitle',saleDateMsg);
+    setReloadBox('offReloadSaleDateBox','offReloadSaleDateLabel',saleDateMsg);
 
     // ソートオプションを有効化
     const sortSel = document.getElementById('sortFilter');
@@ -1653,7 +1662,12 @@ function readOfficialFile(file, type) {
         offShopListOrder.push(k);
       });
       offLoaded.shop = true;
-      setOffBox('offShopBox','offShopTitle',`✅ ショップリスト（${rows.length}件）`);
+      const offShopMsg=`✅ ショップリスト（${rows.length}件）`;
+      setOffBox('offShopBox','offShopTitle',offShopMsg);
+      setReloadBox('offReloadShopBox','offReloadShopLabel',offShopMsg);
+      // 売上タブにも反映
+      setBox('shopBox','shopBoxTitle',offShopMsg);
+      setReloadBox('reloadShopBox','reloadShopLabel',offShopMsg);
     }
 
     // 公式CSVがあれば開始ボタンを表示
@@ -2369,7 +2383,12 @@ function readOffSaleDateFile(file) {
       // タイトル×カテゴリでも引けるように
       offSaleDateMap[sKey(title,cat)] = data;
     });
-    setOffBox('offSaleDateBox','offSaleDateTitle',`✅ 販売日CSV（${rows.length}件）`);
+    const offSaleDateMsg=`✅ 販売日CSV（${rows.length}件）`;
+    setOffBox('offSaleDateBox','offSaleDateTitle',offSaleDateMsg);
+    setReloadBox('offReloadSaleDateBox','offReloadSaleDateLabel',offSaleDateMsg);
+    // 売上タブにも反映
+    setBox('saleDateBox','saleDateBoxTitle',offSaleDateMsg);
+    setReloadBox('reloadSaleDateBox','reloadSaleDateLabel',offSaleDateMsg);
     // 既にofficialDataがあれば再ビルド
     if (officialData.length) {
       buildOfficialData();
