@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LINEスタンプピッカー Pro v3.5.2</title>
+<title>LINEスタンプピッカー Pro v3.5.3</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -135,7 +135,7 @@
 
 <div class="header">
   <span>🛒</span>
-  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.5.2</span></h1>
+  <h1>LINEスタンプピッカー Pro <span style="font-size:11px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:4px;">v3.5.3</span></h1>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('sales')">📊 売上分析</button>
     <button class="mode-tab" onclick="switchMode('official')">🏦 公式CSV</button>
@@ -836,10 +836,7 @@ function setBox(boxId,titleId,text){
 }
 
 function setReloadBox(boxId,labelId,text){
-  const b=document.getElementById(boxId);
-  if(b) b.style.borderColor='#06C755';
-  const l=document.getElementById(labelId);
-  if(l){ l.textContent=text; l.style.color='#06C755'; }
+  // リロードパネルのボックスは開いたときにリセットされるため、ここでは何もしない
 }
 
 document.getElementById('salesFileInput').addEventListener('change',e=>{if(e.target.files[0])readSalesFile(e.target.files[0],'sales');});
@@ -1544,9 +1541,29 @@ function renderChart(){
   });
 }
 
+function resetReloadBoxes(ids){
+  // ids: [[boxId, labelId, defaultText], ...]
+  ids.forEach(([boxId,labelId,defaultText])=>{
+    const b=document.getElementById(boxId);
+    if(b){b.style.borderColor='';b.style.background='white';}
+    const l=document.getElementById(labelId);
+    if(l){l.textContent=defaultText;l.style.color='';}
+  });
+}
+
 function toggleReloadPanel(){
   const p=document.getElementById('reloadPanel');
-  p.style.display=p.style.display==='none'?'':'none';
+  const opening=p.style.display==='none';
+  p.style.display=opening?'':'none';
+  if(opening){
+    resetReloadBoxes([
+      ['reloadSalesBox','reloadSalesLabel','売上CSV'],
+      ['reloadMasterBox','reloadMasterLabel','マスターリストCSV'],
+      ['reloadShopBox','reloadShopLabel','ショップリストCSV'],
+      ['reloadSaleDateBox','reloadSaleDateLabel','販売日CSV（任意）'],
+      ['reloadThemeUrlBox','reloadThemeUrlLabel','着せ替えURLCSV（任意）'],
+    ]);
+  }
 }
 
 function reloadFile(file, type){
@@ -1570,30 +1587,49 @@ function reloadFile(file, type){
 
 document.getElementById('saleDateFileInput').addEventListener('change',e=>{if(e.target.files[0])readSaleDateFile(e.target.files[0]);});
 
-document.getElementById('reloadSalesInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'sales');});
-document.getElementById('reloadMasterInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'master');});
-document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.target.files[0])reloadFile(e.target.files[0],'shop');});
+function markReloadBox(boxId,labelId){
+  const b=document.getElementById(boxId);
+  if(b){b.style.borderColor='#06C755';b.style.background='#f0fff4';}
+  const l=document.getElementById(labelId);
+  if(l){l.textContent='✅ 読み込み完了';l.style.color='#06C755';}
+}
+document.getElementById('reloadSalesInput').addEventListener('change',e=>{if(e.target.files[0]){reloadFile(e.target.files[0],'sales');markReloadBox('reloadSalesBox','reloadSalesLabel');}});
+document.getElementById('reloadMasterInput').addEventListener('change',e=>{if(e.target.files[0]){reloadFile(e.target.files[0],'master');markReloadBox('reloadMasterBox','reloadMasterLabel');}});
+document.getElementById('reloadShopInput').addEventListener('change',e=>{if(e.target.files[0]){reloadFile(e.target.files[0],'shop');markReloadBox('reloadShopBox','reloadShopLabel');}});
 
 document.getElementById('reloadSaleDateInput').addEventListener('change',e=>{
-  if(e.target.files[0]) readSaleDateFile(e.target.files[0]);
+  if(e.target.files[0]){readSaleDateFile(e.target.files[0]);markReloadBox('reloadSaleDateBox','reloadSaleDateLabel');}
 });
 document.getElementById('reloadThemeUrlInput').addEventListener('change',e=>{
-  if(e.target.files[0]) readThemeUrlFile(e.target.files[0]);
+  if(e.target.files[0]){readThemeUrlFile(e.target.files[0]);markReloadBox('reloadThemeUrlBox','reloadThemeUrlLabel');}
 });
 
 // リロードパネルのドラッグ＆ドロップ
+const reloadLabelMap={reloadSalesBox:'reloadSalesLabel',reloadMasterBox:'reloadMasterLabel',reloadShopBox:'reloadShopLabel',reloadSaleDateBox:'reloadSaleDateLabel',reloadThemeUrlBox:'reloadThemeUrlLabel'};
 [['reloadSalesBox','sales'],['reloadMasterBox','master'],['reloadShopBox','shop'],['reloadSaleDateBox','saledate'],['reloadThemeUrlBox','themeurl']].forEach(([boxId,type])=>{
   const box=document.getElementById(boxId);
+  const labelId=reloadLabelMap[boxId];
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
-  box.addEventListener('dragleave',e=>{e.stopPropagation();box.style.borderColor='';box.style.background='white';});
+  box.addEventListener('dragleave',e=>{
+    e.stopPropagation();
+    // 完了済み（✅）なら緑を保持、そうでなければ一時色を戻す
+    const l=document.getElementById(labelId);
+    if(l&&l.textContent.startsWith('✅')){return;}
+    box.style.borderColor='';box.style.background='white';
+  });
   box.addEventListener('drop',e=>{
     e.preventDefault();e.stopPropagation();
-    box.style.borderColor='';box.style.background='white';
     const f=e.dataTransfer.files[0];
     if(f&&f.name.endsWith('.csv')){
       if(type==='saledate') readSaleDateFile(f);
       else if(type==='themeurl') readThemeUrlFile(f);
       else reloadFile(f,type);
+      // このボックスだけ緑に
+      box.style.borderColor='#06C755';box.style.background='#f0fff4';
+      const l=document.getElementById(labelId);
+      if(l){l.textContent='✅ 読み込み完了';l.style.color='#06C755';}
+    } else {
+      box.style.borderColor='';box.style.background='white';
     }
   });
 });
@@ -2460,12 +2496,16 @@ function buildOffShopOrderMap() {
 
 function toggleOffReloadPanel() {
   const p = document.getElementById('offReloadPanel');
-  p.style.display = p.style.display === 'none' || p.style.display === '' ? 'block' : 'none';
-  // ラベルをリセット
-  if (p.style.display !== 'none') {
-    document.getElementById('offReloadOfficialLabel').textContent = '公式CSV';
-    document.getElementById('offReloadMasterLabel').textContent   = 'マスターリストCSV';
-    document.getElementById('offReloadShopLabel').textContent     = 'ショップリストCSV';
+  const opening = p.style.display === 'none' || p.style.display === '';
+  p.style.display = opening ? 'block' : 'none';
+  if (opening) {
+    resetReloadBoxes([
+      ['offReloadOfficialBox','offReloadOfficialLabel','公式CSV'],
+      ['offReloadMasterBox','offReloadMasterLabel','マスターリストCSV'],
+      ['offReloadShopBox','offReloadShopLabel','ショップリストCSV'],
+      ['offReloadSaleDateBox','offReloadSaleDateLabel','販売日CSV（任意）'],
+      ['offReloadThemeUrlBox','offReloadThemeUrlLabel','着せ替えURLCSV（任意）'],
+    ]);
   }
 }
 
@@ -2529,37 +2569,22 @@ function copyOffUrls(type, doCopy=true) {
 document.getElementById('offMasterInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'master');});
 document.getElementById('offShopInput').addEventListener('change',e=>{if(e.target.files[0])readOfficialFile(e.target.files[0],'shop');});
 document.getElementById('offSaleDateInput').addEventListener('change',e=>{if(e.target.files[0])readOffSaleDateFile(e.target.files[0]);});
-document.getElementById('offReloadSaleDateInput').addEventListener('change',e=>{if(e.target.files[0])readOffSaleDateFile(e.target.files[0]);});
+document.getElementById('offReloadSaleDateInput').addEventListener('change',e=>{if(e.target.files[0]){readOffSaleDateFile(e.target.files[0]);markReloadBox('offReloadSaleDateBox','offReloadSaleDateLabel');}});
 document.getElementById('offThemeUrlInput').addEventListener('change',e=>{
   if(e.target.files[0]) readThemeUrlFile(e.target.files[0], 'off');
 });
 document.getElementById('offReloadThemeUrlInput').addEventListener('change',e=>{
-  if(e.target.files[0]) readThemeUrlFile(e.target.files[0], 'off');
+  if(e.target.files[0]){readThemeUrlFile(e.target.files[0],'off');markReloadBox('offReloadThemeUrlBox','offReloadThemeUrlLabel');}
 });
 // イベントリスナー（リロードパネル）
 document.getElementById('offReloadOfficialInput').addEventListener('change',e=>{
-  if(e.target.files[0]){
-    readOfficialFile(e.target.files[0],'official');
-    document.getElementById('offReloadOfficialLabel').textContent='✅ 読み込み完了';
-    document.getElementById('offReloadOfficialBox').style.borderColor='#06C755';
-    document.getElementById('offReloadOfficialBox').style.background='#f0fff4';
-  }
+  if(e.target.files[0]){readOfficialFile(e.target.files[0],'official');markReloadBox('offReloadOfficialBox','offReloadOfficialLabel');}
 });
 document.getElementById('offReloadMasterInput').addEventListener('change',e=>{
-  if(e.target.files[0]){
-    readOfficialFile(e.target.files[0],'master');
-    document.getElementById('offReloadMasterLabel').textContent='✅ 読み込み完了';
-    document.getElementById('offReloadMasterBox').style.borderColor='#06C755';
-    document.getElementById('offReloadMasterBox').style.background='#f0fff4';
-  }
+  if(e.target.files[0]){readOfficialFile(e.target.files[0],'master');markReloadBox('offReloadMasterBox','offReloadMasterLabel');}
 });
 document.getElementById('offReloadShopInput').addEventListener('change',e=>{
-  if(e.target.files[0]){
-    readOfficialFile(e.target.files[0],'shop');
-    document.getElementById('offReloadShopLabel').textContent='✅ 読み込み完了';
-    document.getElementById('offReloadShopBox').style.borderColor='#06C755';
-    document.getElementById('offReloadShopBox').style.background='#f0fff4';
-  }
+  if(e.target.files[0]){readOfficialFile(e.target.files[0],'shop');markReloadBox('offReloadShopBox','offReloadShopLabel');}
 });
 
 // ドラッグ&ドロップ（初期アップロード）
@@ -2584,7 +2609,8 @@ document.getElementById('offReloadShopInput').addEventListener('change',e=>{
   box.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();box.style.borderColor='#06C755';box.style.background='#f0fff4';});
   box.addEventListener('dragleave',e=>{
     e.stopPropagation();
-    if(document.getElementById(labelId).textContent.includes('完了')){return;}
+    const l=document.getElementById(labelId);
+    if(l&&l.textContent.startsWith('✅')){return;}
     box.style.borderColor='';box.style.background='white';
   });
   box.addEventListener('drop',e=>{
@@ -2594,9 +2620,7 @@ document.getElementById('offReloadShopInput').addEventListener('change',e=>{
       if(type==='saledate') readOffSaleDateFile(f);
       else if(type==='themeurl') readThemeUrlFile(f,'off');
       else readOfficialFile(f,type);
-      document.getElementById(labelId).textContent='✅ 読み込み完了';
-      box.style.borderColor='#06C755';
-      box.style.background='#f0fff4';
+      markReloadBox(boxId,labelId);
     } else {
       box.style.borderColor='';box.style.background='white';
     }
